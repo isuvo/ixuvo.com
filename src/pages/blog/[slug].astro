@@ -1,0 +1,245 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { marked } from 'marked';
+import sanitizeHtml from 'sanitize-html';
+import { getPublishedPostWithNeighbors } from '../../lib/pocketbase.js';
+import { profile } from '../../lib/profile.js';
+
+const slug = Astro.params.slug;
+const { post, previousPost, nextPost } = slug
+  ? await getPublishedPostWithNeighbors(slug)
+  : { post: null, previousPost: null, nextPost: null };
+
+if (!post) {
+  Astro.response.status = 404;
+}
+
+const html = post
+  ? sanitizeHtml(marked.parse(post.body_markdown || ''), {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'pre', 'code']),
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        a: ['href', 'name', 'target', 'rel'],
+        img: ['src', 'alt', 'title'],
+      },
+    })
+  : '';
+
+const postUrl = post ? `https://ixuvo.com/blog/${post.slug}` : '';
+const shareTitle = post?.title || 'isuvo blog post';
+const encodedPostUrl = encodeURIComponent(postUrl);
+const encodedShareTitle = encodeURIComponent(shareTitle);
+---
+
+<BaseLayout
+  title={post ? `${post.title} | isuvo` : 'Post not found | isuvo'}
+  description={post?.summary || 'Requested blog post could not be found.'}
+>
+  {post ? (
+    <>
+      <section class="hero">
+        <div class="post-top-nav">
+          <a href="/blog">Back to Blog</a>
+        </div>
+        <h1>{post.title}</h1>
+        <p class="lead-copy">{post.summary}</p>
+      </section>
+      <section class="section">
+        <article class="panel">
+          <div class="meta">
+            {post.published_at ? new Date(post.published_at).toLocaleDateString('en-CA') : 'Unscheduled'}
+            {' | '}
+            {post.reading_time} min read
+            {' | '}
+            {post.filter_label}
+          </div>
+          <div class="author-line">
+            <span>By <a href={`mailto:${profile.contact.email}`}>{profile.shortName}</a></span>
+          </div>
+          {post.legacy_imported ? (
+            <p class="legacy-note">
+              Migrated from the original suvoBGD WordPress archive.
+              {post.legacy_source_url ? (
+                <>
+                  {' '}
+                  <a href={post.legacy_source_url} target="_blank" rel="noreferrer">View the original source</a>.
+                </>
+              ) : null}
+            </p>
+          ) : null}
+          {post.cover_image_url ? <img class="cover-image" src={post.cover_image_url} alt={post.title} /> : null}
+          {post.filter_label ? (
+            <div class="pill-row" style="margin-bottom:1rem;">
+              <span class={`pill post-tag${post.filter_tag === 'legacy' ? ' legacy-tag' : ''}`}>
+                {post.filter_label}
+              </span>
+            </div>
+          ) : null}
+          <div class="post-content" set:html={html}></div>
+          {post.source_urls?.length ? (
+            <>
+              <h2 style="margin-top:1.8rem;">Sources</h2>
+              <ul>
+                {post.source_urls.map((url) => (
+                  <li><a href={url} target="_blank" rel="noreferrer">{url}</a></li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          <div class="share-box" data-share-box data-share-title={shareTitle} data-share-url={postUrl}>
+            <span>Share this post</span>
+            <button type="button" data-native-share>Share</button>
+            <a href={`https://x.com/intent/tweet?text=${encodedShareTitle}&url=${encodedPostUrl}`} target="_blank" rel="noreferrer">X</a>
+            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedPostUrl}`} target="_blank" rel="noreferrer">LinkedIn</a>
+            <a href={`mailto:?subject=${encodedShareTitle}&body=${encodedPostUrl}`}>Email</a>
+            <small data-share-status></small>
+          </div>
+          <nav class="post-nav" aria-label="Post navigation">
+            {previousPost ? (
+              <a class="cta" href={`/blog/${previousPost.slug}`}>Previous: {previousPost.title}</a>
+            ) : <span></span>}
+            {nextPost ? (
+              <a class="cta" href={`/blog/${nextPost.slug}`}>Next: {nextPost.title}</a>
+            ) : <span></span>}
+          </nav>
+        </article>
+      </section>
+      <style>
+        .post-top-nav {
+          margin-bottom: 0.85rem;
+        }
+
+        .post-top-nav a {
+          color: var(--accent-soft);
+          font-size: 0.88rem;
+          text-decoration: none;
+          letter-spacing: 0.04em;
+        }
+
+        .post-top-nav a::before {
+          content: "< ";
+        }
+
+        .author-line {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.55rem;
+          align-items: center;
+          margin: 0.45rem 0 0.9rem;
+          color: var(--muted);
+          font-size: 0.9rem;
+        }
+
+        .author-line span {
+          color: var(--ink);
+          font-weight: 700;
+        }
+
+        .author-line a {
+          color: var(--accent-soft);
+          text-decoration: none;
+        }
+
+        .share-box {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 0.55rem;
+          margin: 0.55rem 0 1rem;
+          padding: 0.75rem;
+          border: 1px solid var(--line-soft);
+          background: rgba(255, 138, 52, 0.05);
+        }
+
+        .share-box > span {
+          color: var(--ink);
+          font-weight: 700;
+          margin-right: 0.15rem;
+        }
+
+        .share-box a,
+        .share-box button {
+          color: var(--accent-soft);
+          border: 1px solid var(--line-soft);
+          padding: 0.42rem 0.6rem;
+          text-decoration: none;
+          font-size: 0.82rem;
+          line-height: 1;
+        }
+
+        .share-box button {
+          background: transparent;
+        }
+
+        .share-box small {
+          color: var(--accent-cool);
+          min-height: 1em;
+        }
+
+        .post-tag.legacy-tag {
+          color: var(--muted);
+          font-size: 0.78rem;
+          opacity: 0.72;
+        }
+
+        .post-nav {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 1rem;
+          margin-top: 2rem;
+        }
+
+        .post-nav .cta {
+          justify-content: center;
+          text-align: center;
+        }
+
+        @media (max-width: 760px) {
+          .post-nav {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
+      <script is:inline>
+        const shareBox = document.querySelector('[data-share-box]');
+
+        if (shareBox) {
+          const shareTitle = shareBox.dataset.shareTitle || document.title;
+          const shareUrl = shareBox.dataset.shareUrl || window.location.href;
+          const nativeShare = shareBox.querySelector('[data-native-share]');
+          const status = shareBox.querySelector('[data-share-status]');
+
+          function setShareStatus(message) {
+            if (!status) return;
+            status.textContent = message;
+            window.setTimeout(() => {
+              status.textContent = '';
+            }, 2400);
+          }
+
+          nativeShare?.addEventListener('click', async () => {
+            try {
+              if (navigator.share) {
+                await navigator.share({ title: shareTitle, url: shareUrl });
+                return;
+              }
+
+              await navigator.clipboard.writeText(shareUrl);
+              setShareStatus('Link copied.');
+            } catch {
+              setShareStatus('Sharing unavailable.');
+            }
+          });
+        }
+      </script>
+    </>
+  ) : (
+    <section class="section">
+      <article class="panel">
+        <h1>Post not found</h1>
+        <p>The requested blog entry may still be in draft, review, or archived status.</p>
+        <a class="cta" href="/blog">Back to Blog</a>
+      </article>
+    </section>
+  )}
+</BaseLayout>

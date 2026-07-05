@@ -1,0 +1,247 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { profile } from '../lib/profile.js';
+import { getGitHubActivity, getGitHubRepos } from '../lib/github.js';
+import { getRecentPostsForHome } from '../lib/pocketbase.js';
+
+let posts = [];
+let repos = [];
+let activity = { total: '0', cells: [], monthLabels: [] };
+let blogError = '';
+let githubError = '';
+
+try {
+  posts = await getRecentPostsForHome(6);
+} catch (error) {
+  blogError = error instanceof Error ? error.message : 'Blog database is not ready yet.';
+}
+
+try {
+  [repos, activity] = await Promise.all([getGitHubRepos(9), getGitHubActivity()]);
+} catch (error) {
+  githubError = error instanceof Error ? error.message : 'GitHub activity is unavailable right now.';
+}
+---
+
+<BaseLayout title="isuvo | Portfolio" description={profile.summary}>
+  <section class="hero">
+    <h1>{profile.shortName}</h1>
+    <div class="identity-lines">
+      {profile.heroLines.map((line) => <div>{line}</div>)}
+    </div>
+    <p class="lead-copy">{profile.summary}</p>
+    <div class="hero-actions">
+      <a class="cta" href="/blog">Read Blog</a>
+      <a class="cta" href={profile.links.resume} target="_blank" rel="noreferrer">Download Resume</a>
+    </div>
+  </section>
+
+  <section class="section" id="activity">
+    <div class="section-head">
+      <div class="eyebrow">Activity</div>
+      <h2 class="section-title"><span class="section-icon"></span>GitHub Activity from <a href={profile.links.github} target="_blank" rel="noreferrer">@{profile.handle}</a></h2>
+    </div>
+    <div class="activity-shell">
+      <p class="helper">{activity.total} contributions in the last year</p>
+      {activity.monthLabels.length ? (
+        <div class="activity-months">
+          {activity.monthLabels.map((month) => <span style={`grid-column-start:${month.weekIndex + 1}`}>{month.label}</span>)}
+        </div>
+      ) : null}
+      <div class="activity-grid">
+        {activity.cells.length ? activity.cells.map((cell) => (
+          <div class={`activity-cell level-${cell.level}`} title={`${cell.date} level ${cell.level}`}></div>
+        )) : (
+          <div class="helper">{githubError || 'GitHub activity is loading.'}</div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="eyebrow">Profile</div>
+      <h2 class="section-title"><span class="section-icon"></span>Profile</h2>
+    </div>
+    <div class="summary-strip">
+      {profile.summaryCards.map((card) => (
+        <article class="summary-card">
+          <strong>{card.label}</strong>
+          <span class="metric-value">{card.metric}</span>
+          <p>{card.value}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="eyebrow">Career</div>
+      <h2 class="section-title"><span class="section-icon"></span>Career Timeline</h2>
+    </div>
+    <div class="timeline-stack">
+      {profile.careerTimeline.map((item) => (
+        <article class="timeline-card">
+          <div class="timeline-period">{item.period}</div>
+          <div class="entry-title">{item.label}</div>
+          {item.organization ? (
+            <div class="entry-subtitle">
+              {item.organizationUrl ? (
+                <a href={item.organizationUrl} target="_blank" rel="noreferrer">{item.organization}</a>
+              ) : item.organization}
+            </div>
+          ) : null}
+          <p class="timeline-detail">{item.detail}</p>
+          <ul class="timeline-points">
+            {item.highlights.map((point) => <li>{point}</li>)}
+          </ul>
+          {item.stack?.length ? (
+            <div class="pill-row" style="margin-top:0.8rem;">
+              {item.stack.map((tag) => <span class="pill">{tag}</span>)}
+            </div>
+          ) : null}
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="eyebrow">Technology</div>
+      <h2 class="section-title"><span class="section-icon"></span>Technology Timeline</h2>
+    </div>
+    <div class="timeline-stack">
+      {profile.technologyTimeline.map((item) => (
+        <article class="timeline-card">
+          <div class="timeline-period">{item.period}</div>
+          <div class="entry-title">{item.label}</div>
+          <p class="timeline-detail">{item.detail}</p>
+          <ul class="timeline-points">
+            {item.highlights.map((point) => <li>{point}</li>)}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="eyebrow">Education</div>
+      <h2 class="section-title"><span class="section-icon"></span>Education and Certifications</h2>
+    </div>
+    <div class="three-col-list">
+      {profile.education.map((item) => (
+        <article class="panel">
+          <div class="entry-title">{item.school}</div>
+          <div class="entry-subtitle">{item.degree}</div>
+          <p>{item.period} | {item.location}</p>
+          <p style="margin-top:0.7rem;">{item.details}</p>
+        </article>
+      ))}
+      {profile.certifications.map((item) => (
+        <article class="panel">
+          <div class="entry-title">{item.name}</div>
+          <div class="entry-subtitle">{item.issuer}</div>
+          <p>{item.period}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="section" id="projects">
+    <div class="section-head">
+      <div class="eyebrow">Blog</div>
+      <h2 class="section-title"><span class="section-icon"></span>Recent Blog Posts</h2>
+    </div>
+    <div class="grid three">
+      {posts.length ? posts.map((post) => (
+        <article class="post-card">
+          <div class="meta">{post.published_at ? new Date(post.published_at).toLocaleDateString('en-CA') : 'Draft'}</div>
+          <h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3>
+          <p>{post.summary || 'No summary yet.'}</p>
+          {post.legacy_imported ? (
+            <p class="legacy-note">Migrated from the original suvoBGD WordPress archive.</p>
+          ) : null}
+          {post.tags?.length ? (
+            <div class="pill-row" style="margin-top:0.5rem;">
+              {post.tags.map((tag) => <span class="pill">{tag}</span>)}
+            </div>
+          ) : null}
+        </article>
+      )) : (
+        <article class="post-card">
+          <h3>No published blog entries yet</h3>
+          <p>{blogError || 'Use the local writer page to create the first post, then it will appear here and on the dedicated blog page.'}</p>
+          <a class="cta" href="/write">Open Writer</a>
+        </article>
+      )}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="eyebrow">Open Source</div>
+      <h2 class="section-title"><span class="section-icon"></span>Recent Repositories</h2>
+    </div>
+    <div class="grid three">
+      {repos.length ? repos.map((repo) => (
+        <article class="post-card repo-card">
+          <div class="meta">{repo.language} | Updated {new Date(repo.updated).toLocaleDateString('en-CA')}</div>
+          <h3><a href={repo.url} target="_blank" rel="noreferrer">{repo.name}</a></h3>
+          <p>{repo.description}</p>
+          {repo.homepage ? <p><a href={repo.homepage} target="_blank" rel="noreferrer">Project link</a></p> : null}
+        </article>
+      )) : (
+        <article class="post-card">
+          <h3>GitHub repositories unavailable</h3>
+          <p>{githubError || 'The GitHub API could not be reached.'}</p>
+        </article>
+      )}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="eyebrow">Skills</div>
+      <h2 class="section-title"><span class="section-icon"></span>Tools and Practice</h2>
+    </div>
+    <div class="three-col-list">
+      {profile.skills.map((group) => (
+        <article class="panel">
+          <div class="tool-group-head">
+            <span class="tool-icon">{group.icon}</span>
+            <div class="entry-title">{group.group}</div>
+          </div>
+          <div class="pill-row" style="margin-top:0.75rem;">
+            {group.items.map((item) => <span class="pill">{item}</span>)}
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div class="eyebrow">Contact</div>
+      <h2 class="section-title"><span class="section-icon"></span>Connect Me</h2>
+    </div>
+    <article class="panel contact-card">
+      <div class="contact-item">
+        <strong>Email</strong>
+        <p><a href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a></p>
+      </div>
+      <div class="contact-item">
+        <strong>GitHub</strong>
+        <p><a href={profile.contact.github} target="_blank" rel="noreferrer">GitHub</a></p>
+      </div>
+      <div class="contact-item">
+        <strong>LinkedIn</strong>
+        <p><a href={profile.contact.linkedin} target="_blank" rel="noreferrer">LinkedIn</a></p>
+      </div>
+      <div class="contact-item">
+        <strong>X</strong>
+        <p><a href={profile.contact.x} target="_blank" rel="noreferrer">@suvobgd</a></p>
+      </div>
+    </article>
+  </section>
+</BaseLayout>

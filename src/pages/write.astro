@@ -1,0 +1,834 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const publicPocketbaseUrl = import.meta.env.PUBLIC_PB_URL || '';
+const adminUiUrl = 'https://pb.ixuvo.com/_/';
+---
+
+<BaseLayout title="Write | isuvo" description="Authenticated writer for PocketBase blog posts.">
+  <section class="hero">
+    <h1>Write</h1>
+    <p class="lead-copy">
+      Manage blog posts, drafts, publishing, and deletion in one place (PocketBase).
+    </p>
+  </section>
+
+  <section class="section">
+    <div class="grid two">
+      <article class="panel">
+        <h2 style="margin-bottom:0.8rem;">Author Login</h2>
+        <form id="login-form" class="grid" style="gap:0.8rem;">
+          <label>
+            Email
+            <input type="email" name="identity" autocomplete="username" required />
+          </label>
+          <label>
+            Password
+            <input type="password" name="password" autocomplete="current-password" required />
+          </label>
+          <div class="pill-row">
+            <button type="submit">Log In</button>
+            <button type="button" id="logout-btn">Log Out</button>
+          </div>
+        </form>
+        <p class="helper" style="margin-top:0.8rem;">Public signup is disabled.</p>
+        <p class="helper" style="margin-top:0.4rem;">
+          PocketBase admin UI: <a href={adminUiUrl} target="_blank" rel="noreferrer">{adminUiUrl}</a>
+        </p>
+        <p id="auth-status" class="status-line" style="margin-top:0.8rem;"></p>
+      </article>
+
+      <article class="panel">
+        <h2 style="margin-bottom:0.8rem;">Existing Posts</h2>
+        <label style="margin-bottom:0.8rem;">
+          Search Existing Posts
+          <input id="post-search" type="search" placeholder="Search title, slug, status, or tags..." />
+        </label>
+        <div id="post-list" class="grid post-list" style="gap:0.8rem;">
+          <p class="helper">Log in to load your posts.</p>
+        </div>
+        <div class="pill-row" style="margin-top:0.8rem;">
+          <button type="button" id="load-more-posts">Load More</button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <article class="panel">
+      <h2 style="margin-bottom:0.8rem;">Post Editor</h2>
+      <form id="post-form" class="grid" style="gap:0.9rem;">
+        <input type="hidden" name="post_id" />
+        <div class="form-grid">
+          <label>
+            Title
+            <input type="text" name="title" required />
+          </label>
+          <label>
+            Slug
+            <input type="text" name="slug" required />
+          </label>
+        </div>
+        <label>
+          Summary
+          <textarea name="summary" style="min-height:6rem;" required></textarea>
+        </label>
+        <label>
+          Body Markdown
+          <textarea name="body_markdown" required></textarea>
+        </label>
+        <div class="form-grid">
+          <label>
+            Status
+            <select name="status">
+              <option value="draft">Draft</option>
+              <option value="review">Review</option>
+              <option value="approved">Approved</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+          </label>
+          <label>
+            Published At
+            <input type="datetime-local" name="published_at" />
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>
+            Tags
+            <select name="tags" required>
+              <option value="general">General</option>
+              <option value="ai">AI Systems</option>
+              <option value="automation">Automation</option>
+              <option value="cloud">Cloud</option>
+              <option value="devsecops">DevSecOps</option>
+              <option value="management">Management</option>
+              <option value="ops">Ops</option>
+              <option value="legacy">Legacy Archive</option>
+            </select>
+          </label>
+          <label>
+            Cover Image
+            <input type="file" name="cover_image" accept="image/*" />
+            <span class="helper">Optional. JPG, PNG, WebP, or GIF up to 5 MB.</span>
+          </label>
+        </div>
+        <label>
+          Source URLs
+          <textarea name="source_urls" style="min-height:6rem;" placeholder="one URL per line"></textarea>
+        </label>
+        <div class="form-grid">
+          <label>
+            LinkedIn Text
+            <textarea name="linkedin_text" style="min-height:8rem;"></textarea>
+          </label>
+          <label>
+            X Text
+            <textarea name="x_text" style="min-height:8rem;"></textarea>
+          </label>
+        </div>
+        <div class="pill-row">
+          <button type="submit" id="save-post-btn">Save Post</button>
+          <button type="button" id="new-post-btn">New Post</button>
+          <button type="button" id="delete-post-btn" class="danger-button">Delete Post</button>
+        </div>
+        <p id="editor-status" class="status-line"></p>
+      </form>
+    </article>
+  </section>
+
+  <script define:vars={{ publicPocketbaseUrl }} is:inline>
+    const authKey = 'isuvo_pb_auth';
+    const ownerEmail = 'isuvo@outlook.com';
+    const sessionMs = 4 * 60 * 60 * 1000;
+    const pageSize = 12;
+    const loginForm = document.getElementById('login-form');
+    const postForm = document.getElementById('post-form');
+    const authStatus = document.getElementById('auth-status');
+    const editorStatus = document.getElementById('editor-status');
+    const postList = document.getElementById('post-list');
+    const postSearch = document.getElementById('post-search');
+    const loadMorePostsBtn = document.getElementById('load-more-posts');
+    const logoutBtn = document.getElementById('logout-btn');
+    const newPostBtn = document.getElementById('new-post-btn');
+    const deletePostBtn = document.getElementById('delete-post-btn');
+    const savePostBtn = document.getElementById('save-post-btn');
+    const allowedTags = ['ai', 'automation', 'cloud', 'devsecops', 'general', 'management', 'ops', 'legacy'];
+    const tagLabels = {
+      ai: 'AI Systems',
+      automation: 'Automation',
+      cloud: 'Cloud',
+      devsecops: 'DevSecOps',
+      general: 'General',
+      management: 'Management',
+      ops: 'Ops',
+      legacy: 'Legacy Archive',
+    };
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const maxCoverImageSize = 5 * 1024 * 1024;
+    let allPosts = [];
+    let visiblePostLimit = pageSize;
+    let sessionTimer = null;
+
+    function resolvePocketBaseUrl() {
+      if (window.location.hostname === 'ixuvo.com' || window.location.hostname === 'www.ixuvo.com') {
+        return '/api/pb';
+      }
+
+      if (publicPocketbaseUrl) {
+        return publicPocketbaseUrl;
+      }
+
+      const { protocol, hostname } = window.location;
+      return `${protocol}//${hostname}:8090`;
+    }
+
+    function pocketBaseEndpoint(path) {
+      const base = resolvePocketBaseUrl().replace(/\/$/, '');
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+      return `${base}${normalizedPath}`;
+    }
+
+    function slugify(value) {
+      return value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    function getAuth() {
+      const raw = localStorage.getItem(authKey);
+      if (!raw) {
+        return null;
+      }
+
+      try {
+        const auth = JSON.parse(raw);
+        if (!auth?.token || !auth?.record || Date.now() >= auth.expiresAt) {
+          clearAuth();
+          return null;
+        }
+
+        return auth;
+      } catch {
+        clearAuth();
+        return null;
+      }
+    }
+
+    function setAuth(data) {
+      localStorage.setItem(authKey, JSON.stringify({
+        ...data,
+        expiresAt: Date.now() + sessionMs,
+      }));
+      scheduleSessionExpiry();
+    }
+
+    function clearAuth() {
+      localStorage.removeItem(authKey);
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+        sessionTimer = null;
+      }
+    }
+
+    function scheduleSessionExpiry() {
+      const auth = getAuth();
+      if (!auth) {
+        return;
+      }
+
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+      }
+
+      sessionTimer = window.setTimeout(() => {
+        clearAuth();
+        authStatus.textContent = 'Session expired. Please log in again.';
+        postList.innerHTML = '<p class="helper">Session expired. Log in to manage posts.</p>';
+        loadMorePostsBtn.style.display = 'none';
+        resetEditor();
+      }, Math.max(0, auth.expiresAt - Date.now()));
+    }
+
+    function formatSession(auth) {
+      const expires = new Date(auth.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return `Logged in as ${auth.record.email}. Session expires at ${expires}.`;
+    }
+
+    function parseList(value) {
+      return value
+        .split(/\n|,/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    function primaryTag(tags) {
+      const normalized = Array.isArray(tags) ? tags.map((tag) => String(tag).toLowerCase()) : [];
+      return allowedTags.find((tag) => normalized.includes(tag)) || (normalized.some((tag) => tag.includes('legacy') || tag.includes('wordpress')) ? 'legacy' : 'general');
+    }
+
+    function setBusy(isBusy, message = '', controls = []) {
+      document.body.classList.toggle('is-busy', isBusy);
+      controls.filter(Boolean).forEach((control) => {
+        control.disabled = isBusy;
+        control.setAttribute('aria-busy', String(isBusy));
+      });
+
+      if (message) {
+        editorStatus.textContent = message;
+      }
+    }
+
+    function formatPocketBaseError(data, fallback) {
+      const details = data?.data && typeof data.data === 'object'
+        ? Object.entries(data.data)
+            .map(([field, issue]) => `${field}: ${issue?.message || JSON.stringify(issue)}`)
+            .join(' | ')
+        : '';
+      return [data?.message || fallback, details].filter(Boolean).join(' - ');
+    }
+
+    function validateUrlList(urls) {
+      const invalid = urls.filter((item) => {
+        try {
+          const parsed = new URL(item);
+          return !['http:', 'https:'].includes(parsed.protocol);
+        } catch {
+          return true;
+        }
+      });
+      return invalid;
+    }
+
+    function validateCoverImage(file) {
+      if (!file) {
+        return '';
+      }
+
+      if (!allowedImageTypes.includes(file.type)) {
+        return 'Cover image must be JPG, PNG, WebP, or GIF.';
+      }
+
+      if (file.size > maxCoverImageSize) {
+        return 'Cover image must be 5 MB or smaller.';
+      }
+
+      return '';
+    }
+
+    function validatePostForm() {
+      const errors = [];
+      const slug = postForm.slug.value || slugify(postForm.title.value);
+      const sourceUrls = parseList(postForm.source_urls.value);
+      const invalidUrls = validateUrlList(sourceUrls);
+      const coverError = validateCoverImage(postForm.cover_image.files[0]);
+
+      if (!postForm.title.value.trim()) errors.push('Title is required.');
+      if (!slug) errors.push('Slug is required.');
+      if (slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) errors.push('Slug can only use lowercase letters, numbers, and single hyphens.');
+      if (!postForm.summary.value.trim()) errors.push('Summary is required.');
+      if (postForm.summary.value.length > 1200) errors.push('Summary must be 1,200 characters or fewer.');
+      if (!postForm.body_markdown.value.trim()) errors.push('Body Markdown is required.');
+      if (!allowedTags.includes(postForm.tags.value)) errors.push('Choose one of the available tag options.');
+      if (invalidUrls.length) errors.push(`Invalid source URL: ${invalidUrls[0]}`);
+      if (coverError) errors.push(coverError);
+
+      return errors;
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.addEventListener('load', () => {
+          const result = String(reader.result || '');
+          resolve(result.includes(',') ? result.split(',').pop() : result);
+        });
+        reader.addEventListener('error', () => reject(new Error('Could not read the cover image.')));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function resetEditor() {
+      postForm.reset();
+      postForm.post_id.value = '';
+      editorStatus.textContent = '';
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function fillEditor(post) {
+      postForm.post_id.value = post.id || '';
+      postForm.title.value = post.title || '';
+      postForm.slug.value = post.slug || '';
+      postForm.summary.value = post.summary || '';
+      postForm.body_markdown.value = post.body_markdown || '';
+      postForm.status.value = post.status || 'draft';
+      postForm.tags.value = primaryTag(post.tags);
+      postForm.source_urls.value = Array.isArray(post.source_urls) ? post.source_urls.join('\n') : '';
+      postForm.linkedin_text.value = post.linkedin_text || '';
+      postForm.x_text.value = post.x_text || '';
+      postForm.published_at.value = post.published_at ? new Date(post.published_at).toISOString().slice(0, 16) : '';
+      editorStatus.textContent = `Loaded ${post.title}`;
+    }
+
+    function matchesSearch(post) {
+      const query = (postSearch.value || '').trim().toLowerCase();
+      if (!query) {
+        return true;
+      }
+
+      return [
+        post.title,
+        post.slug,
+        post.status,
+        Array.isArray(post.tags) ? post.tags.join(' ') : '',
+      ].join(' ').toLowerCase().includes(query);
+    }
+
+    function renderPosts(reset = false) {
+      const auth = getAuth();
+      if (!auth) {
+        postList.innerHTML = '<p class="helper">Log in to load your posts.</p>';
+        loadMorePostsBtn.style.display = 'none';
+        return;
+      }
+
+      if (reset) {
+        visiblePostLimit = pageSize;
+      }
+
+      const visiblePosts = allPosts.filter(matchesSearch);
+
+      if (!visiblePosts.length) {
+        postList.innerHTML = '<p class="helper">No matching posts found.</p>';
+        loadMorePostsBtn.style.display = 'none';
+        return;
+      }
+
+      postList.innerHTML = visiblePosts.slice(0, visiblePostLimit).map((post) => `
+        <div class="panel">
+          <strong>${escapeHtml(post.title || 'Untitled post')}</strong>
+          <p>
+            <span class="status-badge status-${escapeHtml(post.status || 'draft')}">${escapeHtml(post.status || 'draft')}</span>
+          </p>
+          <div class="pill-row" style="margin-top:0.75rem;">
+            <button type="button" data-load-id="${escapeHtml(post.id)}">Load</button>
+            <button type="button" class="danger-button" data-delete-id="${escapeHtml(post.id)}" data-delete-title="${escapeHtml(post.title || 'this post')}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      loadMorePostsBtn.style.display = visiblePosts.length > visiblePostLimit ? '' : 'none';
+
+      postList.querySelectorAll('[data-load-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const post = allPosts.find((item) => item.id === button.dataset.loadId);
+          if (post) {
+            fillEditor(post);
+          }
+        });
+      });
+
+      postList.querySelectorAll('[data-delete-id]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const postTitle = button.dataset.deleteTitle || 'this post';
+          if (!window.confirm(`Delete "${postTitle}"?`)) {
+            return;
+          }
+
+          try {
+            setBusy(true, `Deleting ${postTitle}...`, [button, deletePostBtn, savePostBtn]);
+            await deletePost(button.dataset.deleteId);
+            const successMessage = `Deleted ${postTitle}`;
+            editorStatus.textContent = successMessage;
+            if (postForm.post_id.value === button.dataset.deleteId) {
+              resetEditor();
+            }
+            await fetchPosts();
+            editorStatus.textContent = successMessage;
+          } catch (error) {
+            editorStatus.textContent = error instanceof Error ? error.message : 'Delete failed.';
+          } finally {
+            setBusy(false, '', [button, deletePostBtn, savePostBtn]);
+          }
+        });
+      });
+    }
+
+    async function fetchPosts() {
+      const auth = getAuth();
+      if (!auth) {
+        postList.innerHTML = '<p class="helper">Log in to load your posts.</p>';
+        return;
+      }
+
+      const url = new URL(pocketBaseEndpoint('/api/collections/posts/records'), window.location.origin);
+      url.searchParams.set('sort', '-updated');
+      url.searchParams.set('perPage', '300');
+
+      setBusy(true, 'Loading posts...', [loadMorePostsBtn]);
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'X-Writer-Token': `Bearer ${auth.token}`,
+          },
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(formatPocketBaseError(data, 'Failed to load posts.'));
+        }
+
+        const items = data.items || [];
+        allPosts = items;
+
+        if (!items.length) {
+          postList.innerHTML = '<p class="helper">No posts yet. Save one from the editor to create the first entry.</p>';
+          loadMorePostsBtn.style.display = 'none';
+          return;
+        }
+
+        renderPosts(true);
+      } finally {
+        setBusy(false, '', [loadMorePostsBtn]);
+      }
+    }
+
+    async function refreshAuthState() {
+      const auth = getAuth();
+      if (!auth?.token) {
+        authStatus.textContent = 'Not logged in.';
+        return;
+      }
+
+      authStatus.textContent = formatSession(auth);
+      scheduleSessionExpiry();
+      try {
+        await fetchPosts();
+      } catch (error) {
+        postList.innerHTML = `<p class="helper">${error instanceof Error ? error.message : 'Failed to load posts.'}</p>`;
+      }
+    }
+
+    async function deletePost(postId) {
+      const auth = getAuth();
+      if (!auth?.token) {
+        throw new Error('Please log in first.');
+      }
+
+      const response = await fetch(pocketBaseEndpoint(`/api/collections/posts/records/${postId}`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Writer-Token': `Bearer ${auth.token}`,
+          'X-HTTP-Method-Override': 'DELETE',
+        },
+        body: JSON.stringify({ action: 'delete' }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(formatPocketBaseError(data, 'Delete failed.'));
+      }
+    }
+
+    loginForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(loginForm);
+      setBusy(true, 'Logging in...', [loginForm.querySelector('button[type="submit"]')]);
+
+      try {
+        const response = await fetch(pocketBaseEndpoint('/api/collections/blog_authors/auth-with-password'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            identity: form.get('identity'),
+            password: form.get('password'),
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          authStatus.textContent = formatPocketBaseError(data, 'Login failed.');
+          return;
+        }
+
+        if (data.record?.email !== ownerEmail) {
+          clearAuth();
+          authStatus.textContent = 'This writer is restricted to the owner account.';
+          return;
+        }
+
+        setAuth({ token: data.token, record: data.record });
+        authStatus.textContent = formatSession(getAuth());
+        await fetchPosts();
+      } catch (error) {
+        authStatus.textContent = error instanceof Error ? error.message : 'Login failed.';
+      } finally {
+        setBusy(false, '', [loginForm.querySelector('button[type="submit"]')]);
+      }
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      clearAuth();
+      authStatus.textContent = 'Logged out.';
+      postList.innerHTML = '<p class="helper">Log in to load your posts.</p>';
+      loadMorePostsBtn.style.display = 'none';
+      allPosts = [];
+      resetEditor();
+    });
+
+    newPostBtn.addEventListener('click', resetEditor);
+    postSearch.addEventListener('input', () => renderPosts(true));
+    loadMorePostsBtn.addEventListener('click', () => {
+      setBusy(true, 'Loading more posts...', [loadMorePostsBtn]);
+      visiblePostLimit += pageSize;
+      renderPosts(false);
+      window.setTimeout(() => setBusy(false, '', [loadMorePostsBtn]), 180);
+    });
+
+    postForm.status.addEventListener('change', () => {
+      if (postForm.status.value === 'published' && !postForm.published_at.value) {
+        postForm.published_at.value = new Date().toISOString().slice(0, 16);
+      }
+    });
+
+    deletePostBtn.addEventListener('click', async () => {
+      if (!postForm.post_id.value) {
+        editorStatus.textContent = 'Load a post first if you want to delete it.';
+        return;
+      }
+
+      if (!window.confirm(`Delete "${postForm.title.value || 'this post'}"?`)) {
+        return;
+      }
+
+      try {
+        setBusy(true, `Deleting ${postForm.title.value || 'post'}...`, [deletePostBtn, savePostBtn]);
+        await deletePost(postForm.post_id.value);
+        const successMessage = `Deleted ${postForm.title.value || 'post'}`;
+        editorStatus.textContent = successMessage;
+        resetEditor();
+        await fetchPosts();
+        editorStatus.textContent = successMessage;
+      } catch (error) {
+        editorStatus.textContent = error instanceof Error ? error.message : 'Delete failed.';
+      } finally {
+        setBusy(false, '', [deletePostBtn, savePostBtn]);
+      }
+    });
+
+    postForm.title.addEventListener('input', () => {
+      if (!postForm.post_id.value && !postForm.slug.value.trim()) {
+        postForm.slug.value = slugify(postForm.title.value);
+      }
+    });
+
+    postForm.cover_image.addEventListener('change', () => {
+      const error = validateCoverImage(postForm.cover_image.files[0]);
+      editorStatus.textContent = error || (postForm.cover_image.files[0] ? `Cover image ready: ${postForm.cover_image.files[0].name}` : '');
+    });
+
+    postForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const auth = getAuth();
+      if (!auth?.token) {
+        editorStatus.textContent = 'Please log in first.';
+        return;
+      }
+
+      const validationErrors = validatePostForm();
+      if (validationErrors.length) {
+        editorStatus.textContent = `Fix before saving: ${validationErrors.join(' ')}`;
+        return;
+      }
+
+      if (postForm.status.value === 'published' && !postForm.published_at.value) {
+        postForm.published_at.value = new Date().toISOString().slice(0, 16);
+      }
+
+      const postId = postForm.post_id.value;
+      const endpoint = postId
+        ? pocketBaseEndpoint(`/api/collections/posts/records/${postId}`)
+        : pocketBaseEndpoint('/api/collections/posts/records');
+      const payload = {
+        title: postForm.title.value,
+        slug: postForm.slug.value || slugify(postForm.title.value),
+        summary: postForm.summary.value,
+        body_markdown: postForm.body_markdown.value,
+        status: postForm.status.value,
+        tags: [postForm.tags.value],
+        source_urls: parseList(postForm.source_urls.value),
+        linkedin_text: postForm.linkedin_text.value,
+        x_text: postForm.x_text.value,
+        author: auth.record.id,
+      };
+
+      if (postForm.published_at.value) {
+        payload.published_at = new Date(postForm.published_at.value).toISOString();
+      }
+
+      let body;
+      const headers = {
+        'X-Writer-Token': `Bearer ${auth.token}`,
+        'Content-Type': 'application/json',
+      };
+
+      try {
+        setBusy(true, postForm.status.value === 'published' ? 'Publishing post...' : 'Saving post...', [savePostBtn, deletePostBtn, newPostBtn]);
+
+        const coverImage = postForm.cover_image.files[0];
+        if (coverImage) {
+          payload._cover_image = {
+            name: coverImage.name,
+            type: coverImage.type,
+            data: await fileToBase64(coverImage),
+          };
+        }
+
+        body = JSON.stringify(payload);
+
+        const response = await fetch(endpoint, {
+          method: postId ? 'PATCH' : 'POST',
+          headers,
+          body,
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          editorStatus.textContent = formatPocketBaseError(data, 'Save failed.');
+          return;
+        }
+
+        postForm.post_id.value = data.id;
+        postForm.cover_image.value = '';
+        const successMessage = `${data.status === 'published' ? 'Published' : 'Saved'} "${data.title}" successfully.`;
+        editorStatus.textContent = successMessage;
+        await fetchPosts();
+        editorStatus.textContent = successMessage;
+      } catch (error) {
+        editorStatus.textContent = error instanceof Error ? error.message : 'Save failed.';
+      } finally {
+        setBusy(false, '', [savePostBtn, deletePostBtn, newPostBtn]);
+      }
+    });
+
+    loadMorePostsBtn.style.display = 'none';
+    refreshAuthState();
+  </script>
+
+  <style>
+    :global(body.is-busy) {
+      cursor: wait;
+    }
+
+    :global(body.is-busy button),
+    :global(body.is-busy input),
+    :global(body.is-busy select),
+    :global(body.is-busy textarea) {
+      cursor: wait;
+    }
+
+    .post-list {
+      max-height: 34rem;
+      overflow-y: auto;
+      padding-right: 0.35rem;
+      align-content: start;
+    }
+
+    .post-list::-webkit-scrollbar {
+      width: 0.65rem;
+    }
+
+    .post-list::-webkit-scrollbar-thumb {
+      background: var(--line);
+      border-radius: 999px;
+    }
+
+    .post-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    :global(.status-badge) {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 0.45rem;
+      padding: 0.18rem 0.45rem;
+      border: 1px solid var(--line-soft);
+      color: var(--ink);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    :global(.status-published) {
+      border-color: rgba(74, 222, 128, 0.75);
+      color: #86efac;
+      background: rgba(74, 222, 128, 0.12);
+    }
+
+    :global(.status-draft) {
+      border-color: rgba(148, 163, 184, 0.7);
+      color: #cbd5e1;
+      background: rgba(148, 163, 184, 0.10);
+    }
+
+    :global(.status-review) {
+      border-color: rgba(96, 165, 250, 0.75);
+      color: #93c5fd;
+      background: rgba(96, 165, 250, 0.12);
+    }
+
+    :global(.status-approved) {
+      border-color: rgba(251, 191, 36, 0.75);
+      color: #fde68a;
+      background: rgba(251, 191, 36, 0.12);
+    }
+
+    :global(.status-archived) {
+      border-color: rgba(248, 113, 113, 0.65);
+      color: #fca5a5;
+      background: rgba(248, 113, 113, 0.10);
+    }
+
+    button[aria-busy="true"] {
+      opacity: 0.72;
+      position: relative;
+    }
+
+    button[aria-busy="true"]::after {
+      content: "";
+      width: 0.75rem;
+      height: 0.75rem;
+      margin-left: 0.45rem;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 999px;
+      display: inline-block;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .post-list {
+        max-height: 24rem;
+      }
+    }
+  </style>
+</BaseLayout>

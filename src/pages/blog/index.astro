@@ -1,0 +1,235 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPublishedPosts } from '../../lib/pocketbase.js';
+
+let posts = [];
+let feedError = '';
+
+try {
+  posts = await getPublishedPosts(150);
+} catch (error) {
+  feedError = error instanceof Error ? error.message : 'PocketBase is not ready yet.';
+}
+
+const filterOptions = [
+  { value: 'all', label: 'All' },
+  { value: 'ai', label: 'AI Systems' },
+  { value: 'automation', label: 'Automation' },
+  { value: 'cloud', label: 'Cloud' },
+  { value: 'devsecops', label: 'DevSecOps' },
+  { value: 'general', label: 'General' },
+  { value: 'management', label: 'Management' },
+  { value: 'ops', label: 'Ops' },
+  { value: 'legacy', label: 'Legacy Archive' },
+];
+---
+
+<BaseLayout title="Blog | isuvo" description="Published blog posts from the local-first site.">
+  <section class="hero">
+    <h1>Blog</h1>
+  </section>
+
+  <section class="section">
+    {posts.length ? (
+      <div class="panel blog-controls">
+        <label>
+          Search posts
+          <input id="blog-search" type="search" placeholder="Search by title, excerpt, or tag..." />
+        </label>
+        <div class="pill-row" id="blog-filters" style="margin-top:0.85rem;">
+          {filterOptions.map((filter, index) => (
+            <button
+              type="button"
+              class={`filter-pill${index === 0 ? ' is-active' : ''}`}
+              data-filter={filter.value}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null}
+    <div class="grid three">
+      {posts.length ? posts.map((post, index) => (
+        <article
+          class="post-card blog-card"
+          data-post-card
+          data-index={index}
+          data-category={post.category}
+          data-filter-tag={post.filter_tag}
+          data-search={`${post.title} ${post.excerpt} ${(post.tags || []).join(' ')}`.toLowerCase()}
+        >
+          <div class={`post-thumb thumb-${post.filter_tag || 'ai'}`}>
+            {post.cover_image_url ? (
+              <img src={post.cover_image_url} alt={post.legacy_imported ? 'Legacy archive thumbnail' : ''} loading="lazy" />
+            ) : (
+              <span>{post.filter_label || 'AI Systems'}</span>
+            )}
+          </div>
+          <div class="meta">
+            {post.published_at ? new Date(post.published_at).toLocaleDateString('en-CA') : 'Unscheduled'}
+            {' | '}
+            {post.reading_time} min read
+          </div>
+          <h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3>
+          <p>{post.excerpt || 'No summary yet.'}</p>
+          {post.legacy_imported ? (
+            <p class="legacy-note">Migrated from the original suvoBGD WordPress archive.</p>
+          ) : null}
+          <div class="pill-row" style="margin-top:0.5rem;">
+            <button
+              type="button"
+              class={`tag-pill${post.filter_tag === 'legacy' ? ' legacy-tag' : ''}`}
+              data-tag-filter={post.filter_tag}
+            >
+              {post.filter_label}
+            </button>
+          </div>
+        </article>
+      )) : (
+        <article class="post-card">
+          <h3>No published blog posts yet</h3>
+          <p>{feedError || 'Create a post locally and publish it to see it here.'}</p>
+          <a class="cta" href="/write">Open Writer</a>
+        </article>
+      )}
+    </div>
+    {posts.length ? (
+      <>
+        <p id="blog-result-count" class="helper" style="margin-top:1rem;"></p>
+        <div class="hero-actions">
+          <button type="button" id="load-more-posts">Load More</button>
+        </div>
+      </>
+    ) : null}
+  </section>
+
+  <script is:inline>
+    const pageSize = 12;
+    let visibleLimit = pageSize;
+    let activeFilter = 'all';
+
+    const cards = Array.from(document.querySelectorAll('[data-post-card]'));
+    const searchInput = document.getElementById('blog-search');
+    const filterButtons = Array.from(document.querySelectorAll('[data-filter]'));
+    const tagButtons = Array.from(document.querySelectorAll('[data-tag-filter]'));
+    const loadMoreButton = document.getElementById('load-more-posts');
+    const resultCount = document.getElementById('blog-result-count');
+
+    function matchesCard(card) {
+      const query = (searchInput?.value || '').trim().toLowerCase();
+      const filterTag = card.dataset.filterTag || 'ai';
+      const searchable = card.dataset.search || '';
+      const matchesSearch = !query || searchable.includes(query);
+      const matchesFilter = activeFilter === 'all' || filterTag === activeFilter || searchable.includes(activeFilter.toLowerCase());
+      return matchesSearch && matchesFilter;
+    }
+
+    function renderCards(reset = false) {
+      if (reset) {
+        visibleLimit = pageSize;
+      }
+
+      const matchingCards = cards.filter(matchesCard);
+
+      cards.forEach((card) => {
+        card.style.display = 'none';
+      });
+
+      matchingCards.slice(0, visibleLimit).forEach((card) => {
+        card.style.display = '';
+      });
+
+      if (loadMoreButton) {
+        loadMoreButton.style.display = matchingCards.length > visibleLimit ? '' : 'none';
+      }
+
+      if (resultCount) {
+        const shown = Math.min(visibleLimit, matchingCards.length);
+        resultCount.textContent = `${shown} of ${matchingCards.length} posts shown`;
+      }
+    }
+
+    searchInput?.addEventListener('input', () => renderCards(true));
+
+    filterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeFilter = button.dataset.filter || 'all';
+        filterButtons.forEach((item) => item.classList.toggle('is-active', item === button));
+        renderCards(true);
+      });
+    });
+
+    tagButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeFilter = button.dataset.tagFilter || 'all';
+        filterButtons.forEach((item) => item.classList.remove('is-active'));
+        filterButtons.find((item) => item.dataset.filter === activeFilter)?.classList.add('is-active');
+        renderCards(true);
+      });
+    });
+
+    loadMoreButton?.addEventListener('click', () => {
+      loadMoreButton.disabled = true;
+      loadMoreButton.setAttribute('aria-busy', 'true');
+      visibleLimit += pageSize;
+      renderCards(false);
+      window.setTimeout(() => {
+        loadMoreButton.disabled = false;
+        loadMoreButton.setAttribute('aria-busy', 'false');
+      }, 180);
+    });
+
+    renderCards(true);
+  </script>
+
+  <style>
+    .blog-controls {
+      margin-bottom: 1rem;
+    }
+
+    .filter-pill,
+    .tag-pill {
+      border-color: var(--line-soft);
+      padding: 0.45rem 0.7rem;
+      font-size: 0.85rem;
+    }
+
+    .filter-pill.is-active {
+      border-color: var(--accent);
+      color: var(--accent-soft);
+    }
+
+    .tag-pill.legacy-tag {
+      color: var(--muted);
+      font-size: 0.76rem;
+      opacity: 0.72;
+    }
+
+    .post-thumb {
+      aspect-ratio: 16 / 9;
+      border: 1px solid var(--line-soft);
+      display: grid;
+      place-items: center;
+      margin-bottom: 0.4rem;
+      background:
+        radial-gradient(circle at top left, rgba(255, 138, 52, 0.26), transparent 38%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 138, 52, 0.08));
+      overflow: hidden;
+    }
+
+    .post-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .post-thumb span {
+      color: var(--ink);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+  </style>
+</BaseLayout>

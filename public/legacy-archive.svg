@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Legacy archive thumbnail</title>
+  <desc id="desc">Orange and black archive card for older migrated blog posts.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#171717"/>
+      <stop offset="0.55" stop-color="#050505"/>
+      <stop offset="1" stop-color="#2d1608"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb06b"/>
+      <stop offset="1" stop-color="#ff7a1a"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg)"/>
+  <g opacity="0.32" stroke="#ff8a34" stroke-width="2">
+    <path d="M0 96h960M0 192h960M0 288h960M0 384h960M0 480h960"/>
+    <path d="M120 0v540M240 0v540M360 0v540M480 0v540M600 0v540M720 0v540M840 0v540"/>
+  </g>
+  <circle cx="760" cy="120" r="130" fill="#ff8a34" opacity="0.13"/>
+  <circle cx="180" cy="420" r="170" fill="#ff8a34" opacity="0.10"/>
+  <g transform="translate(275 125)">
+    <path d="M56 82h318c28 0 50 22 50 50v210H6V132c0-28 22-50 50-50Z" fill="#111" stroke="#ff8a34" stroke-width="10"/>
+    <path d="M74 36h126l42 46H74c-22 0-40 18-40 40v12" fill="#111" stroke="#ff8a34" stroke-width="10" stroke-linejoin="round"/>
+    <rect x="54" y="142" width="322" height="154" rx="18" fill="url(#accent)"/>
+    <path d="M100 190h230M100 238h180" stroke="#111" stroke-width="18" stroke-linecap="round"/>
+  </g>
+  <text x="480" y="455" text-anchor="middle" fill="#f7efe7" font-family="Courier New, monospace" font-size="46" font-weight="700" letter-spacing="5">LEGACY ARCHIVE</text>
+</svg>
