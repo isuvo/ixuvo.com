@@ -55,10 +55,14 @@ export const ALL: APIRoute = async ({ params, request, url }) => {
   ) {
     const payload = await request.json();
     const coverImage = payload._cover_image;
+    const embeddedImages = Array.isArray(payload._embedded_images) ? payload._embedded_images : [];
+    const hasCoverImage = Boolean(coverImage?.data && coverImage?.name && coverImage?.type);
+    const hasEmbeddedImages = embeddedImages.some((image) => image?.data && image?.name && image?.type);
 
-    if (coverImage?.data && coverImage?.name && coverImage?.type) {
+    if (hasCoverImage || hasEmbeddedImages) {
       const form = new FormData();
       delete payload._cover_image;
+      delete payload._embedded_images;
 
       for (const [key, value] of Object.entries(payload)) {
         if (value === undefined || value === null) {
@@ -68,8 +72,24 @@ export const ALL: APIRoute = async ({ params, request, url }) => {
         form.set(key, Array.isArray(value) || typeof value === 'object' ? JSON.stringify(value) : String(value));
       }
 
-      const bytes = Buffer.from(String(coverImage.data), 'base64');
-      form.set('cover_image', new Blob([bytes], { type: String(coverImage.type) }), String(coverImage.name));
+      if (hasCoverImage) {
+        const bytes = Buffer.from(String(coverImage.data), 'base64');
+        form.set('cover_image', new Blob([bytes], { type: String(coverImage.type) }), String(coverImage.name));
+      }
+
+      const isRecordUpdate =
+        upstreamMethod === 'PATCH' && /^api\/collections\/posts\/records\/[a-zA-Z0-9_-]+$/.test(path);
+      const embeddedFieldName = isRecordUpdate ? 'embedded_images+' : 'embedded_images';
+
+      for (const image of embeddedImages) {
+        if (!image?.data || !image?.name || !image?.type) {
+          continue;
+        }
+
+        const bytes = Buffer.from(String(image.data), 'base64');
+        form.append(embeddedFieldName, new Blob([bytes], { type: String(image.type) }), String(image.name));
+      }
+
       headers.delete('content-type');
       body = form;
     } else {

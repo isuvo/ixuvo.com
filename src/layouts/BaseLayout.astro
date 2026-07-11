@@ -537,9 +537,8 @@ function navProps(path) {
 
       .cover-image {
         width: 100%;
-        max-height: clamp(20rem, 46vw, 34rem);
-        aspect-ratio: 16 / 9;
-        object-fit: contain;
+        height: auto;
+        object-fit: cover;
         background:
           radial-gradient(circle at top right, rgba(255, 138, 52, 0.12), transparent 34%),
           var(--panel-strong);
