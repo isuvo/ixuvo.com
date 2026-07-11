@@ -2,7 +2,31 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const publicPocketbaseUrl = import.meta.env.PUBLIC_PB_URL || '';
+const pocketbaseUrl = (import.meta.env.PB_URL || 'http://127.0.0.1:8090').replace(/\/$/, '');
+const writerCookieName = 'ixuvo_writer_session';
+const ownerEmail = 'isuvo@outlook.com';
 const adminUiUrl = 'https://pb.ixuvo.com/_/';
+
+let writerRecord = null;
+const writerToken = Astro.cookies.get(writerCookieName)?.value;
+if (writerToken) {
+  try {
+    const response = await fetch(`${pocketbaseUrl}/api/collections/blog_authors/auth-refresh`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${writerToken}` },
+    });
+    const data = await response.json();
+    if (response.ok && data.record?.email === ownerEmail) {
+      writerRecord = data.record;
+    } else {
+      Astro.cookies.delete(writerCookieName, { path: '/' });
+    }
+  } catch {
+    Astro.cookies.delete(writerCookieName, { path: '/' });
+  }
+}
+
+const writerAuthenticated = Boolean(writerRecord);
 ---
 
 <BaseLayout title="Write | isuvo" description="Authenticated writer for PocketBase blog posts.">
@@ -54,7 +78,8 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
     </div>
   </section>
 
-  <section class="section">
+  {writerAuthenticated ? (
+  <section id="post-editor-section" class="section">
     <article class="panel">
       <h2 style="margin-bottom:0.8rem;">Post Editor</h2>
       <form id="post-form" class="grid" style="gap:0.9rem;">
@@ -64,6 +89,7 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
             Import Markdown File
             <input id="markdown-import" type="file" accept=".md,.markdown,text/markdown,text/plain" />
             <span class="helper">Import a Markdown draft before filling or reviewing the post fields.</span>
+            <a class="template-link" href="/blog-post-template.md" download>Download Markdown Template</a>
           </label>
         </div>
         <div class="form-grid">
@@ -154,20 +180,26 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
           <button type="button" id="new-post-btn">New Post</button>
           <button type="button" id="delete-post-btn" class="danger-button">Delete Post</button>
         </div>
+        <p id="editor-validation-error" class="form-error" role="alert" hidden></p>
         <p id="editor-status" class="status-line"></p>
       </form>
     </article>
   </section>
+  ) : null}
 
-  <script define:vars={{ publicPocketbaseUrl }} is:inline>
+  <script define:vars={{ publicPocketbaseUrl, writerAuthenticated, writerRecord }} is:inline>
     const authKey = 'isuvo_pb_auth';
     const ownerEmail = 'isuvo@outlook.com';
     const sessionMs = 4 * 60 * 60 * 1000;
     const pageSize = 12;
+    const initialWriterAuthenticated = writerAuthenticated === true;
+    const initialWriterRecord = writerRecord;
     const loginForm = document.getElementById('login-form');
     const postForm = document.getElementById('post-form');
+    const editorAvailable = Boolean(postForm);
     const authStatus = document.getElementById('auth-status');
     const editorStatus = document.getElementById('editor-status');
+    const validationError = document.getElementById('editor-validation-error');
     const summaryCounter = document.getElementById('summary-counter');
     const bodyCounter = document.getElementById('body-counter');
     const postList = document.getElementById('post-list');
@@ -230,23 +262,27 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
     }
 
     function getAuth() {
+      if (!initialWriterAuthenticated) {
+        return null;
+      }
+
       const raw = localStorage.getItem(authKey);
-      if (!raw) {
-        return null;
-      }
-
-      try {
-        const auth = JSON.parse(raw);
-        if (!auth?.token || !auth?.record || Date.now() >= auth.expiresAt) {
-          clearAuth();
-          return null;
+      if (raw) {
+        try {
+          const auth = JSON.parse(raw);
+          if (auth?.record && Date.now() < auth.expiresAt) {
+            return { ...auth, record: initialWriterRecord || auth.record, token: '' };
+          }
+        } catch {
+          // The server-rendered session remains authoritative.
         }
-
-        return auth;
-      } catch {
-        clearAuth();
-        return null;
       }
+
+      return {
+        record: initialWriterRecord,
+        expiresAt: Date.now() + sessionMs,
+        token: '',
+      };
     }
 
     function setAuth(data) {
@@ -265,6 +301,10 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
       }
     }
 
+    function hideEditor() {
+      document.getElementById('post-editor-section')?.remove();
+    }
+
     function scheduleSessionExpiry() {
       const auth = getAuth();
       if (!auth) {
@@ -280,7 +320,12 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
         authStatus.textContent = 'Session expired. Please log in again.';
         postList.innerHTML = '<p class="helper">Session expired. Log in to manage posts.</p>';
         loadMorePostsBtn.style.display = 'none';
-        resetEditor();
+        hideEditor();
+        fetch('/api/writer-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'logout' }),
+        }).finally(() => window.location.reload());
       }, Math.max(0, auth.expiresAt - Date.now()));
     }
 
@@ -312,9 +357,56 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
         control.setAttribute('aria-busy', String(isBusy));
       });
 
-      if (message) {
+      if (message && editorStatus) {
         editorStatus.textContent = message;
       }
+    }
+
+    function showValidationErrors(errors) {
+      const message = errors.join(' ');
+      if (validationError) {
+        validationError.textContent = message;
+        validationError.hidden = !message;
+      }
+      if (editorStatus) {
+        editorStatus.textContent = message ? `Fix before saving: ${message}` : '';
+      }
+    }
+
+    function clearValidationError() {
+      if (validationError) {
+        validationError.textContent = '';
+        validationError.hidden = true;
+      }
+    }
+
+    const requiredFieldMessages = {
+      title: 'Title is required.',
+      slug: 'Slug is required.',
+      summary: 'Summary is required.',
+      body_markdown: 'Body Markdown is required.',
+      tags: 'Choose a tag before saving.',
+    };
+
+    function handleInvalidField(event) {
+      const field = event.target;
+      const message = requiredFieldMessages[field?.name];
+      if (!message) {
+        return;
+      }
+
+      field.setCustomValidity(message);
+      field.setAttribute('aria-invalid', 'true');
+      showValidationErrors([message]);
+    }
+
+    function handleFieldInput(event) {
+      const field = event.target;
+      if (requiredFieldMessages[field?.name]) {
+        field.setCustomValidity('');
+        field.removeAttribute('aria-invalid');
+      }
+      clearValidationError();
     }
 
     function formatPocketBaseError(data, fallback) {
@@ -464,12 +556,48 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
       }
 
       const data = {};
-      match[1].split(/\r?\n/).forEach((line) => {
+      const lines = match[1].split(/\r?\n/);
+      let blockKey = '';
+      let blockFolded = false;
+      let blockLines = [];
+
+      const flushBlock = () => {
+        if (!blockKey) {
+          return;
+        }
+
+        data[blockKey] = blockLines.join(blockFolded ? ' ' : '\n').trim();
+        blockKey = '';
+        blockFolded = false;
+        blockLines = [];
+      };
+
+      lines.forEach((line) => {
+        if (blockKey) {
+          if (!line.trim() || /^\s+/.test(line)) {
+            blockLines.push(line.replace(/^\s{2}/, '').replace(/^\t/, ''));
+            return;
+          }
+
+          flushBlock();
+        }
+
         const field = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
-        if (field) {
-          data[field[1].toLowerCase()] = field[2];
+        if (!field) {
+          return;
+        }
+
+        const key = field[1].toLowerCase();
+        const value = field[2];
+        if (value === '|' || value === '>') {
+          blockKey = key;
+          blockFolded = value === '>';
+        } else {
+          data[key] = value;
         }
       });
+
+      flushBlock();
 
       return {
         data,
@@ -572,9 +700,14 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
     }
 
     function resetEditor() {
+      if (!postForm) {
+        return;
+      }
+
       postForm.reset();
       postForm.post_id.value = '';
       updateEditorCounters();
+      clearValidationError();
       setEmbeddedUploadStatus('');
       editorStatus.textContent = '';
     }
@@ -702,11 +835,7 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
 
       setBusy(true, 'Loading posts...', [loadMorePostsBtn]);
       try {
-        const response = await fetch(url, {
-          headers: {
-            'X-Writer-Token': `Bearer ${auth.token}`,
-          },
-        });
+        const response = await fetch(url);
 
         const data = await response.json();
         if (!response.ok) {
@@ -725,12 +854,15 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
         renderPosts(true);
       } finally {
         setBusy(false, '', [loadMorePostsBtn]);
+        if (editorStatus?.textContent === 'Loading posts...') {
+          editorStatus.textContent = '';
+        }
       }
     }
 
     async function refreshAuthState() {
       const auth = getAuth();
-      if (!auth?.token) {
+      if (!auth) {
         authStatus.textContent = 'Not logged in.';
         return;
       }
@@ -746,7 +878,7 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
 
     async function deletePost(postId) {
       const auth = getAuth();
-      if (!auth?.token) {
+      if (!auth) {
         throw new Error('Please log in first.');
       }
 
@@ -754,7 +886,6 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Writer-Token': `Bearer ${auth.token}`,
           'X-HTTP-Method-Override': 'DELETE',
         },
         body: JSON.stringify({ action: 'delete' }),
@@ -772,7 +903,7 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
       setBusy(true, 'Logging in...', [loginForm.querySelector('button[type="submit"]')]);
 
       try {
-        const response = await fetch(pocketBaseEndpoint('/api/collections/blog_authors/auth-with-password'), {
+        const response = await fetch('/api/writer-auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -787,15 +918,8 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
           return;
         }
 
-        if (data.record?.email !== ownerEmail) {
-          clearAuth();
-          authStatus.textContent = 'This writer is restricted to the owner account.';
-          return;
-        }
-
-        setAuth({ token: data.token, record: data.record });
-        authStatus.textContent = formatSession(getAuth());
-        await fetchPosts();
+        setAuth({ record: data.record });
+        window.location.reload();
       } catch (error) {
         authStatus.textContent = error instanceof Error ? error.message : 'Login failed.';
       } finally {
@@ -803,23 +927,33 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
       }
     });
 
-    logoutBtn.addEventListener('click', () => {
+    logoutBtn.addEventListener('click', async () => {
+      await fetch('/api/writer-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logout' }),
+      }).catch(() => {});
       clearAuth();
-      authStatus.textContent = 'Logged out.';
-      postList.innerHTML = '<p class="helper">Log in to load your posts.</p>';
-      loadMorePostsBtn.style.display = 'none';
-      allPosts = [];
-      resetEditor();
+      hideEditor();
+      window.location.reload();
     });
 
-    newPostBtn.addEventListener('click', resetEditor);
-    postSearch.addEventListener('input', () => renderPosts(true));
-    loadMorePostsBtn.addEventListener('click', () => {
-      setBusy(true, 'Loading more posts...', [loadMorePostsBtn]);
-      visiblePostLimit += pageSize;
-      renderPosts(false);
-      window.setTimeout(() => setBusy(false, '', [loadMorePostsBtn]), 180);
-    });
+    if (editorAvailable) {
+      postForm.addEventListener('invalid', handleInvalidField, true);
+      postForm.addEventListener('input', handleFieldInput);
+      newPostBtn.addEventListener('click', resetEditor);
+      postSearch.addEventListener('input', () => renderPosts(true));
+      loadMorePostsBtn.addEventListener('click', () => {
+        setBusy(true, 'Loading more posts...', [loadMorePostsBtn]);
+        visiblePostLimit += pageSize;
+        renderPosts(false);
+        window.setTimeout(() => {
+          setBusy(false, '', [loadMorePostsBtn]);
+          if (editorStatus?.textContent === 'Loading more posts...') {
+            editorStatus.textContent = '';
+          }
+        }, 180);
+      });
 
     postForm.status.addEventListener('change', () => {
       if (postForm.status.value === 'published' && !postForm.published_at.value) {
@@ -927,7 +1061,7 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
 
     uploadEmbeddedImagesBtn.addEventListener('click', async () => {
       const auth = getAuth();
-      if (!auth?.token) {
+      if (!auth) {
         setEmbeddedUploadStatus('Please log in before uploading a body image.', 'error');
         editorStatus.textContent = 'Please log in first.';
         return;
@@ -980,10 +1114,7 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
 
         const response = await fetch(pocketBaseEndpoint(`/api/collections/posts/records/${postId}`), {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Writer-Token': `Bearer ${auth.token}`,
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ _embedded_images: uploadedImages }),
         });
 
@@ -1018,10 +1149,7 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
 
         const bodyResponse = await fetch(pocketBaseEndpoint(`/api/collections/posts/records/${postId}`), {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Writer-Token': `Bearer ${auth.token}`,
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ body_markdown: postForm.body_markdown.value }),
         });
         const bodyData = await bodyResponse.json();
@@ -1048,15 +1176,16 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
 
     postForm.addEventListener('submit', async (event) => {
       event.preventDefault();
+      clearValidationError();
       const auth = getAuth();
-      if (!auth?.token) {
+      if (!auth) {
         editorStatus.textContent = 'Please log in first.';
         return;
       }
 
       const validationErrors = validatePostForm();
       if (validationErrors.length) {
-        editorStatus.textContent = `Fix before saving: ${validationErrors.join(' ')}`;
+        showValidationErrors(validationErrors);
         return;
       }
 
@@ -1086,10 +1215,7 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
       }
 
       let body;
-      const headers = {
-        'X-Writer-Token': `Bearer ${auth.token}`,
-        'Content-Type': 'application/json',
-      };
+      const headers = { 'Content-Type': 'application/json' };
 
       try {
         setBusy(true, postForm.status.value === 'published' ? 'Publishing post...' : 'Saving post...', [savePostBtn, deletePostBtn, newPostBtn]);
@@ -1119,6 +1245,7 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
 
         postForm.post_id.value = data.id;
         postForm.cover_image.value = '';
+        clearValidationError();
         const successMessage = `${data.status === 'published' ? 'Published' : 'Saved'} "${data.title}" successfully.`;
         editorStatus.textContent = successMessage;
         await fetchPosts();
@@ -1129,22 +1256,19 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
         setBusy(false, '', [savePostBtn, deletePostBtn, newPostBtn]);
       }
     });
+    }
 
     loadMorePostsBtn.style.display = 'none';
-    updateEditorCounters();
+    if (editorAvailable) {
+      updateEditorCounters();
+    }
     refreshAuthState();
   </script>
 
   <style>
-    :global(body.is-busy) {
-      cursor: wait;
-    }
-
-    :global(body.is-busy button),
-    :global(body.is-busy input),
-    :global(body.is-busy select),
-    :global(body.is-busy textarea) {
-      cursor: wait;
+    :global(body.is-busy),
+    :global(body.is-busy *) {
+      cursor: wait !important;
     }
 
     .post-list {
@@ -1171,6 +1295,18 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
       padding: 0.85rem;
       border: 1px solid var(--line-soft);
       background: rgba(255, 255, 255, 0.03);
+    }
+
+    .template-link {
+      display: inline-block;
+      margin-top: 0.25rem;
+      color: var(--accent-soft);
+      font-size: 0.82rem;
+      text-decoration: none;
+    }
+
+    .template-link:hover {
+      text-decoration: underline;
     }
 
     .media-tools {
@@ -1230,6 +1366,14 @@ const adminUiUrl = 'https://pb.ixuvo.com/_/';
 
     .field-counter.is-over-limit {
       color: #fca5a5;
+    }
+
+    .form-error {
+      margin: 0;
+      padding: 0.65rem 0.8rem;
+      border: 1px solid rgba(248, 113, 113, 0.65);
+      color: #fecaca;
+      background: rgba(248, 113, 113, 0.1);
     }
 
     @media (max-width: 720px) {

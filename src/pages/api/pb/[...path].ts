@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { Buffer } from 'node:buffer';
 
 const pbUrl = (import.meta.env.PB_URL || 'http://127.0.0.1:8090').replace(/\/$/, '');
+const ownerEmail = 'isuvo@outlook.com';
 
 const allowedRoutes = [
   /^api\/collections\/blog_authors\/auth-with-password$/,
@@ -11,6 +12,28 @@ const allowedRoutes = [
 
 function isAllowedPath(path: string) {
   return allowedRoutes.some((pattern) => pattern.test(path));
+}
+
+function writerTokenFromCookie(cookieHeader: string | null) {
+  const match = cookieHeader?.match(/(?:^|;\s*)ixuvo_writer_session=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+async function isAuthorizedWriter(authorization: string) {
+  if (!authorization) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(`${pbUrl}/api/collections/blog_authors/auth-refresh`, {
+      method: 'POST',
+      headers: { Authorization: authorization },
+    });
+    const data = await response.json().catch(() => ({}));
+    return response.ok && data.record?.email === ownerEmail;
+  } catch {
+    return false;
+  }
 }
 
 export const ALL: APIRoute = async ({ params, request, url }) => {
@@ -27,7 +50,8 @@ export const ALL: APIRoute = async ({ params, request, url }) => {
   targetUrl.search = url.search;
 
   const headers = new Headers();
-  const authorization = request.headers.get('authorization') || request.headers.get('x-writer-token');
+  const cookieToken = writerTokenFromCookie(request.headers.get('cookie'));
+  const authorization = request.headers.get('authorization') || request.headers.get('x-writer-token') || (cookieToken ? `Bearer ${cookieToken}` : '');
   const contentType = request.headers.get('content-type');
   const overrideMethod = request.headers.get('x-http-method-override')?.toUpperCase();
   const upstreamMethod =
@@ -36,6 +60,14 @@ export const ALL: APIRoute = async ({ params, request, url }) => {
     /^api\/collections\/posts\/records\/[a-zA-Z0-9_-]+$/.test(path)
       ? 'DELETE'
       : request.method;
+
+  const isPostRecordRoute = /^api\/collections\/posts\/records(?:\/[a-zA-Z0-9_-]+)?$/.test(path);
+  if (isPostRecordRoute && !(await isAuthorizedWriter(authorization))) {
+    return new Response(JSON.stringify({ message: 'Writer authentication required.' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   if (authorization) {
     headers.set('Authorization', authorization);
