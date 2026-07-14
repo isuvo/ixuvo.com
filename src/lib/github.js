@@ -1,7 +1,13 @@
 const GH_USER = 'isuvo';
+const GH_ACTIVITY_USERS = ['isuvo', 'shuvo-kage'];
 
 function shortMonth(date) {
   return date.toLocaleString('en-US', { month: 'short' });
+}
+
+function readAttribute(tag, name) {
+  const match = tag.match(new RegExp(`${name}="([^"]*)"`));
+  return match ? match[1] : '';
 }
 
 async function fetchText(url) {
@@ -48,22 +54,55 @@ export async function getGitHubRepos(limit = 9) {
 }
 
 export async function getGitHubActivity() {
-  const html = await fetchText(`https://github.com/users/${GH_USER}/contributions`);
-  const totalMatch = html.match(/<h2[^>]*>\s*([0-9,]+)\s+contributions\s+in the last year/i);
-  const cellRegex = /data-date="([^"]+)"[^>]*data-level="([^"]+)"[^>]*class="ContributionCalendar-day"/g;
-  const levelsByDate = new Map();
+  const activities = await Promise.all(GH_ACTIVITY_USERS.map(async (user) => {
+    const html = await fetchText(`https://github.com/users/${user}/contributions`);
+    const totalMatch = html.match(/<h2[^>]*>\s*([0-9,]+)\s+contributions\s+in the last year/i);
+    const cellRegex = /<[^>]*ContributionCalendar-day[^>]*>/g;
+    const levelsByDate = new Map();
+    const countsByDate = new Map();
 
-  for (const match of html.matchAll(cellRegex)) {
-    levelsByDate.set(match[1], Number(match[2] || 0));
+    for (const match of html.matchAll(cellRegex)) {
+      const tag = match[0];
+      const date = readAttribute(tag, 'data-date');
+      const count = Number(readAttribute(tag, 'data-count') || 0);
+      const level = Number(readAttribute(tag, 'data-level') || 0);
+
+      if (!date) {
+        continue;
+      }
+
+      levelsByDate.set(date, level);
+      countsByDate.set(date, count);
+    }
+
+    return {
+      total: totalMatch ? Number(totalMatch[1].replace(/,/g, '')) : 0,
+      countsByDate,
+      levelsByDate,
+    };
+  }));
+
+  const total = activities.reduce((sum, activity) => sum + activity.total, 0);
+  const levelsByDate = new Map();
+  const countsByDate = new Map();
+
+  for (const activity of activities) {
+    for (const [date, count] of activity.countsByDate) {
+      countsByDate.set(date, (countsByDate.get(date) || 0) + count);
+    }
+
+    for (const [date, level] of activity.levelsByDate) {
+      levelsByDate.set(date, Math.min(4, (levelsByDate.get(date) || 0) + level));
+    }
   }
 
-  const dates = [...levelsByDate.keys()].sort();
+  const dates = [...new Set([...countsByDate.keys(), ...levelsByDate.keys()])].sort();
   const firstDate = dates[0];
   const lastDate = dates[dates.length - 1];
 
   if (!firstDate || !lastDate) {
     return {
-      total: totalMatch ? totalMatch[1] : '0',
+      total: total.toLocaleString('en-US'),
       cells: [],
       monthLabels: [],
     };
@@ -78,6 +117,7 @@ export async function getGitHubActivity() {
     cells.push({
       date,
       level: levelsByDate.get(date) || 0,
+      count: countsByDate.get(date) || 0,
       month: shortMonth(cursor),
       weekday: cursor.getUTCDay(),
     });
@@ -101,7 +141,7 @@ export async function getGitHubActivity() {
   }
 
   return {
-    total: totalMatch ? totalMatch[1] : '0',
+    total: total.toLocaleString('en-US'),
     cells,
     monthLabels,
   };

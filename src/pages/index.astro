@@ -39,21 +39,26 @@ try {
   <section class="section" id="activity">
     <div class="section-head">
       <div class="eyebrow">Activity</div>
-      <h2 class="section-title"><span class="section-icon"></span>GitHub Activity from <a href={profile.links.github} target="_blank" rel="noreferrer">@{profile.handle}</a></h2>
+      <h2 class="section-title">
+        <span class="section-icon"></span>
+        GitHub Contributions Across <a href={profile.links.github} target="_blank" rel="noreferrer">@Personal</a> and <a href="https://github.com/shuvo-kage" target="_blank" rel="noreferrer">@Professional</a> Profiles
+      </h2>
     </div>
     <div class="activity-shell">
       <p class="helper">{activity.total} contributions in the last year</p>
-      {activity.monthLabels.length ? (
-        <div class="activity-months">
-          {activity.monthLabels.map((month) => <span style={`grid-column-start:${month.weekIndex + 1}`}>{month.label}</span>)}
+      <div class="activity-scroll">
+        {activity.monthLabels.length ? (
+          <div class="activity-months">
+            {activity.monthLabels.map((month) => <span style={`grid-column:${month.weekIndex + 1} / span 4`}>{month.label}</span>)}
+          </div>
+        ) : null}
+        <div class="activity-grid">
+          {activity.cells.length ? activity.cells.map((cell) => (
+            <div class={`activity-cell level-${cell.level}`} title={`${cell.date}: ${cell.count} contributions`}></div>
+          )) : (
+            <div class="helper">{githubError || 'GitHub activity is loading.'}</div>
+          )}
         </div>
-      ) : null}
-      <div class="activity-grid">
-        {activity.cells.length ? activity.cells.map((cell) => (
-          <div class={`activity-cell level-${cell.level}`} title={`${cell.date} level ${cell.level}`}></div>
-        )) : (
-          <div class="helper">{githubError || 'GitHub activity is loading.'}</div>
-        )}
       </div>
     </div>
   </section>
@@ -134,15 +139,14 @@ try {
         <article class="panel">
           <div class="entry-title">{item.school}</div>
           <div class="entry-subtitle">{item.degree}</div>
-          <p>{item.period} | {item.location}</p>
-          <p style="margin-top:0.7rem;">{item.details}</p>
+          {item.location ? <p>{item.location}</p> : null}
+          {item.details ? <p style="margin-top:0.7rem;">{item.details}</p> : null}
         </article>
       ))}
       {profile.certifications.map((item) => (
         <article class="panel">
           <div class="entry-title">{item.name}</div>
           <div class="entry-subtitle">{item.issuer}</div>
-          <p>{item.period}</p>
         </article>
       ))}
     </div>

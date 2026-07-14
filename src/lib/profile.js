@@ -32,7 +32,7 @@ export const profile = {
       degree: 'MSc in Computer Science',
       period: '2024 - 2025',
       location: 'Quebec, Canada',
-      details: 'AI/ML research with a security-oriented software analysis focus.',
+      details: '',
     },
   ],
   certifications: [

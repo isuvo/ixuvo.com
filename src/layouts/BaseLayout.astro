@@ -45,10 +45,10 @@ function navProps(path) {
         --accent-soft: #ffc089;
         --accent-cool: #9eb8bf;
         --heat-0: #121212;
-        --heat-1: #4b4b4b;
-        --heat-2: #8a8a8a;
+        --heat-1: #256c6a;
+        --heat-2: #3f7fb5;
         --heat-3: #ff8a34;
-        --heat-4: #fff1d6;
+        --heat-4: #ffe082;
       }
 
       :root[data-theme="light"] {
@@ -65,10 +65,10 @@ function navProps(path) {
         --accent-soft: #9f4f10;
         --accent-cool: #305f6e;
         --heat-0: #ece3d8;
-        --heat-1: #d4c3af;
-        --heat-2: #b58f67;
+        --heat-1: #87c9c5;
+        --heat-2: #6ea7d7;
         --heat-3: #e36f15;
-        --heat-4: #3d2e1e;
+        --heat-4: #7c4d13;
       }
 
       * {
@@ -276,6 +276,8 @@ function navProps(path) {
       .section-title {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
         gap: 0.55rem;
       }
 
@@ -381,18 +383,40 @@ function navProps(path) {
         font-weight: 700;
       }
 
+      .section-title a {
+        color: var(--ink);
+        text-decoration-color: var(--accent-soft);
+        text-underline-offset: 0.18rem;
+      }
+
       .activity-grid {
         display: grid;
+        grid-template-columns: repeat(53, minmax(10px, 1fr));
+        grid-template-rows: repeat(7, auto);
+        gap: 3px;
         grid-auto-flow: column;
-        grid-template-rows: repeat(7, 12px);
-        gap: 4px;
-        overflow-x: auto;
+        min-width: 686px;
+        width: 100%;
         padding-bottom: 0.35rem;
       }
 
+      .activity-shell {
+        min-width: 0;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      .activity-scroll {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 0.2rem;
+      }
+
       .activity-cell {
-        width: 12px;
-        height: 12px;
+        width: 100%;
+        aspect-ratio: 1;
         border-radius: 2px;
         background: var(--heat-0);
       }
@@ -404,15 +428,17 @@ function navProps(path) {
 
       .activity-months {
         display: grid;
-        grid-template-columns: repeat(53, 1fr);
-        gap: 4px;
+        grid-template-columns: repeat(53, minmax(10px, 1fr));
+        gap: 3px;
+        min-width: 686px;
+        width: 100%;
         color: var(--muted);
         font-size: 0.8rem;
         margin-bottom: 0.55rem;
       }
 
       .activity-months span {
-        grid-column: span 4;
+        white-space: nowrap;
       }
 
       .summary-strip {
@@ -613,6 +639,44 @@ function navProps(path) {
         color: var(--muted);
         font-size: 0.92rem;
         text-align: center;
+      }
+
+      .back-to-top {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 1.25rem;
+        width: 2.75rem;
+        height: 2.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border-color: var(--line);
+        background:
+          linear-gradient(135deg, rgba(255, 138, 52, 0.2), transparent 60%),
+          var(--panel-strong);
+        color: var(--ink);
+        box-shadow: 0 0 0 4px rgba(255, 138, 52, 0.1);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(0.6rem);
+        transition:
+          opacity 160ms ease,
+          transform 160ms ease,
+          border-color 160ms ease;
+        z-index: 30;
+      }
+
+      .back-to-top.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .back-to-top:hover,
+      .back-to-top:focus-visible {
+        border-color: var(--accent);
+        outline: none;
       }
 
       .form-grid {
@@ -816,7 +880,14 @@ function navProps(path) {
         }
 
         .activity-months {
-          min-width: 700px;
+          min-width: 686px;
+        }
+
+        .back-to-top {
+          right: 0.9rem;
+          bottom: 0.9rem;
+          width: 2.45rem;
+          height: 2.45rem;
         }
       }
     </style>
@@ -841,13 +912,15 @@ function navProps(path) {
       </header>
       <slot />
       <footer>
-        Copyright &copy; {year} isuvo.
+        &copy; {year} isuvo. For professional inquiries, contact <a href="mailto:admin@ixuvo.com">admin@ixuvo.com</a>.
       </footer>
     </div>
+    <button type="button" id="back-to-top" class="back-to-top" aria-label="Back to top">↑</button>
     <script is:inline>
       const storageKey = 'isuvo_theme';
       const root = document.documentElement;
       const toggle = document.getElementById('theme-toggle');
+      const backToTop = document.getElementById('back-to-top');
 
       function applyTheme(theme) {
         root.setAttribute('data-theme', theme);
@@ -865,6 +938,17 @@ function navProps(path) {
         const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
         localStorage.setItem(storageKey, next);
         applyTheme(next);
+      });
+
+      function updateBackToTop() {
+        backToTop?.classList.toggle('is-visible', window.scrollY > 420);
+      }
+
+      window.addEventListener('scroll', updateBackToTop, { passive: true });
+      updateBackToTop();
+
+      backToTop?.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     </script>
   </body>
