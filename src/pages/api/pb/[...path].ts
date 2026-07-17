@@ -1,11 +1,13 @@
 import type { APIRoute } from 'astro';
 import { Buffer } from 'node:buffer';
 
-const pbUrl = (import.meta.env.PB_URL || 'http://127.0.0.1:8090').replace(/\/$/, '');
-const ownerEmail = 'isuvo@outlook.com';
+const pbUrl = String(import.meta.env.PB_URL || '').trim().replace(/\/$/, '');
+
+if (!pbUrl) {
+  throw new Error('PB_URL environment variable is required.');
+}
 
 const allowedRoutes = [
-  /^api\/collections\/blog_authors\/auth-with-password$/,
   /^api\/collections\/posts\/records(?:\/[a-zA-Z0-9_-]+)?$/,
   /^api\/files\/posts\/[a-zA-Z0-9_-]+\/[^/]+$/,
 ];
@@ -30,7 +32,7 @@ async function isAuthorizedWriter(authorization: string) {
       headers: { Authorization: authorization },
     });
     const data = await response.json().catch(() => ({}));
-    return response.ok && data.record?.email === ownerEmail;
+    return response.ok && data.record?.verified === true;
   } catch {
     return false;
   }

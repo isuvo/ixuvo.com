@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+Astro.response.status = 404;
+---
+
+<BaseLayout
+  title="Page not found | isuvo"
+  description="The requested page could not be found on isuvo."
+  canonical={null}
+  noindex={true}
+>
+  <section class="hero">
+    <div class="eyebrow">404 / NOT FOUND</div>
+    <h1>This page does not exist.</h1>
+    <p class="lead-copy">The URL may be outdated or mistyped.</p>
+    <div class="action-row">
+      <a class="button primary" href="/">Return home</a>
+      <a class="button" href="/blog">Browse the blog</a>
+    </div>
+  </section>
+</BaseLayout>

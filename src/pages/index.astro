@@ -9,6 +9,19 @@ let repos = [];
 let activity = { total: '0', cells: [], monthLabels: [] };
 let blogError = '';
 let githubError = '';
+const profileSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  url: 'https://ixuvo.com/',
+  mainEntity: {
+    '@type': 'Person',
+    name: profile.name,
+    url: 'https://ixuvo.com/',
+    image: 'https://ixuvo.com/logo.png',
+    jobTitle: profile.title,
+    sameAs: [profile.links.github, profile.links.linkedin, profile.links.x],
+  },
+};
 
 try {
   posts = await getRecentPostsForHome(6);
@@ -23,7 +36,12 @@ try {
 }
 ---
 
-<BaseLayout title="isuvo | Portfolio" description={profile.summary}>
+<BaseLayout
+  title="isuvo — Engineering Lead & AI/ML Researcher"
+  description={profile.summary}
+  canonical="/"
+>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(profileSchema)}></script>
   <section class="hero">
     <h1>{profile.shortName}</h1>
     <div class="identity-lines">
@@ -31,8 +49,12 @@ try {
     </div>
     <p class="lead-copy">{profile.summary}</p>
     <div class="hero-actions">
-      <a class="cta" href="/blog">Read Blog</a>
-      <a class="cta" href={profile.links.resume} target="_blank" rel="noreferrer">Download Resume</a>
+      <a class="cta" href="/blog">
+        <span>Read Blog</span><span class="cta-icon" aria-hidden="true">&#8594;</span>
+      </a>
+      <a class="cta cta-secondary cta-download" href={profile.links.resume} target="_blank" rel="noreferrer">
+        <span>Download Resume</span><span class="cta-icon" aria-hidden="true">&#8595;</span>
+      </a>
     </div>
   </section>
 
@@ -193,7 +215,10 @@ try {
           <div class="meta">{repo.language} | Updated {new Date(repo.updated).toLocaleDateString('en-CA')}</div>
           <h3><a href={repo.url} target="_blank" rel="noreferrer">{repo.name}</a></h3>
           <p>{repo.description}</p>
-          {repo.homepage ? <p><a href={repo.homepage} target="_blank" rel="noreferrer">Project link</a></p> : null}
+          <div class="repo-actions">
+            <a class="repo-action" href={repo.url} target="_blank" rel="noreferrer">Repository</a>
+            {repo.homepage ? <a class="repo-action is-primary" href={repo.homepage} target="_blank" rel="noreferrer">Project</a> : null}
+          </div>
         </article>
       )) : (
         <article class="post-card">

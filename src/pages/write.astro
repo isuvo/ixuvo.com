@@ -1,11 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-const publicPocketbaseUrl = import.meta.env.PUBLIC_PB_URL || '';
-const pocketbaseUrl = (import.meta.env.PB_URL || 'http://127.0.0.1:8090').replace(/\/$/, '');
+const pocketbaseUrl = String(import.meta.env.PB_URL || '').trim().replace(/\/$/, '');
 const writerCookieName = 'ixuvo_writer_session';
-const ownerEmail = 'isuvo@outlook.com';
-const adminUiUrl = 'https://pb.ixuvo.com/_/';
+const adminUiUrl = String(import.meta.env.PUBLIC_PB_URL || '').trim().replace(/\/$/, '') + '/_/';
+
+if (!pocketbaseUrl) {
+  throw new Error('PB_URL environment variable is required.');
+}
 
 let writerRecord = null;
 const writerToken = Astro.cookies.get(writerCookieName)?.value;
@@ -16,7 +18,7 @@ if (writerToken) {
       headers: { Authorization: `Bearer ${writerToken}` },
     });
     const data = await response.json();
-    if (response.ok && data.record?.email === ownerEmail) {
+    if (response.ok && data.record?.verified === true) {
       writerRecord = data.record;
     } else {
       Astro.cookies.delete(writerCookieName, { path: '/' });
@@ -29,7 +31,12 @@ if (writerToken) {
 const writerAuthenticated = Boolean(writerRecord);
 ---
 
-<BaseLayout title="Write | isuvo" description="Authenticated writer for PocketBase blog posts.">
+<BaseLayout
+  title="Blog Writer | isuvo"
+  description="Private authoring workspace for managing isuvo blog posts."
+  canonical="/write"
+  noindex={true}
+>
   <section class="hero">
     <h1>Write</h1>
     <p class="lead-copy">
@@ -56,9 +63,11 @@ const writerAuthenticated = Boolean(writerRecord);
           </div>
         </form>
         <p class="helper" style="margin-top:0.8rem;">Public signup is disabled.</p>
-        <p class="helper" style="margin-top:0.4rem;">
-          PocketBase admin UI: <a href={adminUiUrl} target="_blank" rel="noreferrer">{adminUiUrl}</a>
-        </p>
+        {import.meta.env.PUBLIC_PB_URL ? (
+          <p class="helper" style="margin-top:0.4rem;">
+            PocketBase admin UI: <a href={adminUiUrl} target="_blank" rel="noreferrer">{adminUiUrl}</a>
+          </p>
+        ) : null}
         <p id="auth-status" class="status-line" style="margin-top:0.8rem;"></p>
       </article>
 
@@ -112,9 +121,9 @@ const writerAuthenticated = Boolean(writerRecord);
             <span>Body Markdown</span>
             <button type="button" id="insert-image-marker-btn" class="inline-tool-button">Place Image Marker</button>
           </span>
-          <textarea name="body_markdown" required></textarea>
+          <textarea name="body_markdown" maxlength="20000" required></textarea>
           <span class="helper">Place the cursor between paragraphs, then place the marker before uploading.</span>
-          <span id="body-counter" class="field-counter" aria-live="polite">0 words · 0 characters</span>
+          <span id="body-counter" class="field-counter" aria-live="polite">0 words · 0 / 20,000 characters</span>
         </label>
         <div class="media-tools">
           <div class="media-tool">
@@ -146,21 +155,23 @@ const writerAuthenticated = Boolean(writerRecord);
             <input type="datetime-local" name="published_at" />
           </label>
         </div>
-        <div class="form-grid">
-          <label>
-            Tags
-            <select name="tags" required>
-              <option value="general">General</option>
-              <option value="ai">AI Systems</option>
-              <option value="automation">Automation</option>
-              <option value="cloud">Cloud</option>
-              <option value="devsecops">DevSecOps</option>
-              <option value="management">Management</option>
-              <option value="ops">Ops</option>
-              <option value="legacy">Legacy Archive</option>
-            </select>
-          </label>
-        </div>
+        <fieldset class="tag-selector">
+          <legend>Tags</legend>
+          <div class="tag-quick-actions" aria-label="Quick add tags">
+            <button type="button" class="tag-quick-button" data-tag-value="ai" data-tag-alias="ai systems">AI Systems</button>
+            <button type="button" class="tag-quick-button" data-tag-value="automation">Automation</button>
+            <button type="button" class="tag-quick-button" data-tag-value="cloud">Cloud</button>
+            <button type="button" class="tag-quick-button" data-tag-value="devsecops">DevSecOps</button>
+            <button type="button" class="tag-quick-button" data-tag-value="security">Security</button>
+            <button type="button" class="tag-quick-button" data-tag-value="system-design" data-tag-alias="system design">System Design</button>
+            <button type="button" class="tag-quick-button" data-tag-value="general">General</button>
+            <button type="button" class="tag-quick-button" data-tag-value="management">Management</button>
+            <button type="button" class="tag-quick-button" data-tag-value="ops">Ops</button>
+            <button type="button" class="tag-quick-button" data-tag-value="legacy" data-tag-alias="legacy archive">Legacy Archive</button>
+          </div>
+          <textarea name="tags" class="tag-input" placeholder="AI Security, Cloud, DevSecOps" required>general</textarea>
+          <span class="helper">Use the buttons or enter custom tags separated by commas or new lines.</span>
+        </fieldset>
         <label>
           Source URLs
           <textarea name="source_urls" style="min-height:6rem;" placeholder="one URL per line"></textarea>
@@ -187,9 +198,8 @@ const writerAuthenticated = Boolean(writerRecord);
   </section>
   ) : null}
 
-  <script define:vars={{ publicPocketbaseUrl, writerAuthenticated, writerRecord }} is:inline>
+  <script define:vars={{ writerAuthenticated, writerRecord }} is:inline>
     const authKey = 'isuvo_pb_auth';
-    const ownerEmail = 'isuvo@outlook.com';
     const sessionMs = 4 * 60 * 60 * 1000;
     const pageSize = 12;
     const initialWriterAuthenticated = writerAuthenticated === true;
@@ -214,18 +224,8 @@ const writerAuthenticated = Boolean(writerRecord);
     const uploadEmbeddedImagesBtn = document.getElementById('upload-embedded-images-btn');
     const embeddedUploadStatus = document.getElementById('embedded-upload-status');
     const insertImageMarkerBtn = document.getElementById('insert-image-marker-btn');
+    const tagQuickButtons = Array.from(document.querySelectorAll('[data-tag-value]'));
     const imagePlacementMarker = '<!-- ixuvo-image-here -->';
-    const allowedTags = ['ai', 'automation', 'cloud', 'devsecops', 'general', 'management', 'ops', 'legacy'];
-    const tagLabels = {
-      ai: 'AI Systems',
-      automation: 'Automation',
-      cloud: 'Cloud',
-      devsecops: 'DevSecOps',
-      general: 'General',
-      management: 'Management',
-      ops: 'Ops',
-      legacy: 'Legacy Archive',
-    };
     const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     const maxCoverImageSize = 5 * 1024 * 1024;
     const maxEmbeddedImageSize = 10 * 1024 * 1024;
@@ -235,16 +235,7 @@ const writerAuthenticated = Boolean(writerRecord);
     let sessionTimer = null;
 
     function resolvePocketBaseUrl() {
-      if (window.location.hostname === 'ixuvo.com' || window.location.hostname === 'www.ixuvo.com') {
-        return '/api/pb';
-      }
-
-      if (publicPocketbaseUrl) {
-        return publicPocketbaseUrl;
-      }
-
-      const { protocol, hostname } = window.location;
-      return `${protocol}//${hostname}:8090`;
+      return '/api/pb';
     }
 
     function pocketBaseEndpoint(path) {
@@ -345,9 +336,31 @@ const writerAuthenticated = Boolean(writerRecord);
       return [...new Set(items.map((item) => String(item || '').trim()).filter(Boolean))];
     }
 
-    function primaryTag(tags) {
-      const normalized = Array.isArray(tags) ? tags.map((tag) => String(tag).toLowerCase()) : [];
-      return allowedTags.find((tag) => normalized.includes(tag)) || (normalized.some((tag) => tag.includes('legacy') || tag.includes('wordpress')) ? 'legacy' : 'general');
+    function selectedTags() {
+      const seen = new Set();
+      return parseList(postForm.tags.value).filter((tag) => {
+        const key = tag.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function setSelectedTags(tags) {
+      const selected = uniqueList(Array.isArray(tags) ? tags : []);
+      postForm.tags.value = (selected.length ? selected : ['general']).join(', ');
+      syncTagQuickButtons();
+    }
+
+    function syncTagQuickButtons() {
+      const selected = new Set(selectedTags().map((tag) => tag.toLowerCase()));
+      tagQuickButtons.forEach((button) => {
+        const value = button.dataset.tagValue || '';
+        const alias = button.dataset.tagAlias || '';
+        const active = selected.has(value) || (alias && selected.has(alias));
+        button.classList.toggle('is-selected', Boolean(active));
+        button.setAttribute('aria-pressed', String(Boolean(active)));
+      });
     }
 
     function setBusy(isBusy, message = '', controls = []) {
@@ -478,8 +491,9 @@ const writerAuthenticated = Boolean(writerRecord);
       if (!postForm.summary.value.trim()) errors.push('Summary is required.');
       if (postForm.summary.value.length > 1200) errors.push('Summary must be 1,200 characters or fewer.');
       if (!postForm.body_markdown.value.trim()) errors.push('Body Markdown is required.');
+      if (postForm.body_markdown.value.length > 20000) errors.push('Body Markdown must be 20,000 characters or fewer.');
       if (postForm.body_markdown.value.includes(imagePlacementMarker)) errors.push('Finish placing the body image or remove the image marker before saving.');
-      if (!allowedTags.includes(postForm.tags.value)) errors.push('Choose one of the available tag options.');
+      if (!selectedTags().length) errors.push('Choose at least one tag.');
       if (invalidUrls.length) errors.push(`Invalid source URL: ${invalidUrls[0]}`);
       if (coverError) errors.push(coverError);
 
@@ -503,8 +517,9 @@ const writerAuthenticated = Boolean(writerRecord);
       const summaryLength = postForm.summary.value.length;
       const bodyLength = postForm.body_markdown.value.length;
       summaryCounter.textContent = `${countWords(postForm.summary.value)} words · ${summaryLength.toLocaleString()} / 1,200 characters`;
-      bodyCounter.textContent = `${countWords(postForm.body_markdown.value)} words · ${bodyLength.toLocaleString()} characters`;
+      bodyCounter.textContent = `${countWords(postForm.body_markdown.value)} words · ${bodyLength.toLocaleString()} / 20,000 characters`;
       summaryCounter.classList.toggle('is-over-limit', summaryLength > 1200);
+      bodyCounter.classList.toggle('is-over-limit', bodyLength > 20000);
     }
 
     function fileToBase64(file) {
@@ -683,10 +698,7 @@ const writerAuthenticated = Boolean(writerRecord);
       updateEditorCounters();
       postForm.source_urls.value = importedSources.join('\n');
 
-      const importedTag = primaryTag(importedTags);
-      if (allowedTags.includes(importedTag)) {
-        postForm.tags.value = importedTag;
-      }
+      setSelectedTags(importedTags);
 
       const importedStatus = stripQuotes(data.status).toLowerCase();
       if (['draft', 'review', 'approved', 'published', 'archived'].includes(importedStatus)) {
@@ -707,6 +719,7 @@ const writerAuthenticated = Boolean(writerRecord);
       postForm.reset();
       postForm.post_id.value = '';
       updateEditorCounters();
+      syncTagQuickButtons();
       clearValidationError();
       setEmbeddedUploadStatus('');
       editorStatus.textContent = '';
@@ -729,7 +742,7 @@ const writerAuthenticated = Boolean(writerRecord);
       postForm.body_markdown.value = post.body_markdown || '';
       updateEditorCounters();
       postForm.status.value = post.status || 'draft';
-      postForm.tags.value = primaryTag(post.tags);
+      setSelectedTags(post.tags);
       postForm.source_urls.value = Array.isArray(post.source_urls) ? post.source_urls.join('\n') : '';
       postForm.linkedin_text.value = post.linkedin_text || '';
       postForm.x_text.value = post.x_text || '';
@@ -994,6 +1007,23 @@ const writerAuthenticated = Boolean(writerRecord);
 
     postForm.summary.addEventListener('input', updateEditorCounters);
     postForm.body_markdown.addEventListener('input', updateEditorCounters);
+    postForm.tags.addEventListener('input', syncTagQuickButtons);
+
+    tagQuickButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const value = button.dataset.tagValue;
+        if (!value) return;
+
+        const tags = selectedTags();
+        const selected = new Set(tags.map((tag) => tag.toLowerCase()));
+        const alias = button.dataset.tagAlias || '';
+        if (!selected.has(value) && !(alias && selected.has(alias))) {
+          tags.push(value);
+          setSelectedTags(tags);
+        }
+        postForm.tags.focus();
+      });
+    });
 
     postForm.cover_image.addEventListener('change', () => {
       const error = validateCoverImage(postForm.cover_image.files[0]);
@@ -1203,7 +1233,7 @@ const writerAuthenticated = Boolean(writerRecord);
         summary: postForm.summary.value,
         body_markdown: postForm.body_markdown.value,
         status: postForm.status.value,
-        tags: [postForm.tags.value],
+        tags: selectedTags(),
         source_urls: parseList(postForm.source_urls.value),
         linkedin_text: postForm.linkedin_text.value,
         x_text: postForm.x_text.value,
@@ -1261,6 +1291,7 @@ const writerAuthenticated = Boolean(writerRecord);
     loadMorePostsBtn.style.display = 'none';
     if (editorAvailable) {
       updateEditorCounters();
+      syncTagQuickButtons();
     }
     refreshAuthState();
   </script>
@@ -1316,6 +1347,49 @@ const writerAuthenticated = Boolean(writerRecord);
       padding: 0.85rem;
       border: 1px solid var(--line-soft);
       background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tag-selector {
+      margin: 0;
+      padding: 0.85rem;
+      border: 1px solid var(--line-soft);
+      min-width: 0;
+    }
+
+    .tag-selector legend {
+      padding: 0 0.35rem;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .tag-input {
+      min-height: 4.5rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .tag-quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .tag-quick-button {
+      min-height: 2.25rem;
+      padding: 0.42rem 0.7rem;
+      border-color: var(--line-soft);
+      color: var(--ink);
+      font-size: 0.82rem;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .tag-quick-button:hover,
+    .tag-quick-button:focus-visible,
+    .tag-quick-button.is-selected {
+      border-color: var(--accent);
+      color: var(--accent-soft);
+      background: rgba(255, 138, 52, 0.1);
     }
 
     .media-tool {

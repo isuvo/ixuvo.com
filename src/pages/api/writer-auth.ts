@@ -1,9 +1,12 @@
 import type { APIRoute } from 'astro';
 
-const pbUrl = (import.meta.env.PB_URL || 'http://127.0.0.1:8090').replace(/\/$/, '');
-const ownerEmail = 'isuvo@outlook.com';
+const pbUrl = String(import.meta.env.PB_URL || '').trim().replace(/\/$/, '');
 const cookieName = 'ixuvo_writer_session';
 const sessionSeconds = 4 * 60 * 60;
+
+if (!pbUrl) {
+  throw new Error('PB_URL environment variable is required.');
+}
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -18,7 +21,7 @@ async function refreshWriter(token: string) {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await response.json().catch(() => ({}));
-  return response.ok && data.record?.email === ownerEmail ? data : null;
+  return response.ok && data.record?.verified === true ? data : null;
 }
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -48,8 +51,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return json(data, response.status);
   }
 
-  if (!data.record?.email || data.record.email !== ownerEmail) {
-    return json({ message: 'This writer is restricted to the owner account.' }, 403);
+  if (data.record?.verified !== true) {
+    return json({ message: 'Verify your author account before logging in.' }, 403);
   }
 
   cookies.set(cookieName, data.token, {

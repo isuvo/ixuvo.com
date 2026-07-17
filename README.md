@@ -8,7 +8,7 @@ This project contains:
 
 - Personal profile homepage
 - Blog listing and individual blog post pages
-- Owner-only write/edit page for blog publishing
+- Verified-author write/edit page for blog publishing
 - PocketBase-backed content API integration
 - Resume download and static assets
 - RSS feed and sitemap generation
@@ -60,7 +60,7 @@ node_modules       Installed dependencies
 /                  Homepage
 /blog              Blog listing
 /blog/[slug]       Individual blog post
-/write             Owner-only blog editor
+/write             Verified-author blog editor
 /rss.xml           RSS feed
 /sitemap-index.xml Sitemap
 /healthz           Health check endpoint
@@ -82,7 +82,7 @@ Public PocketBase URL:
 https://pb.ixuvo.com
 ```
 
-PocketBase is protected through Cloudflare Access on the public domain. Public signup is disabled. Only the owner account is intended to publish content.
+PocketBase is protected through Cloudflare Access on the public domain. Public signup is disabled. Authors must be created and verified in PocketBase before they can sign in and publish content.
 
 ## Development
 
@@ -184,10 +184,12 @@ https://ixuvo.com/isuvo-resume.pdf?fresh=1
 
 ## Environment
 
-The Astro config uses `SITE_URL` when available:
+The site requires `PB_URL` for server-side PocketBase access and uses `SITE_URL` for canonical URLs:
 
 ```text
 SITE_URL=https://ixuvo.com
+PB_URL=http://127.0.0.1:8090
+PUBLIC_PB_URL=https://pb.ixuvo.com
 ```
 
 If `SITE_URL` is not set, the site falls back to:
@@ -274,4 +276,3 @@ C:\HomeServer\backups
 ```
 
 The repo should contain the source code. Runtime data and generated backup files should remain outside Git.
-

@@ -1,9 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { marked } from 'marked';
-import sanitizeHtml from 'sanitize-html';
 import { getPublishedPostWithNeighbors } from '../../lib/pocketbase.js';
 import { profile } from '../../lib/profile.js';
+import { renderPostHtml } from '../../lib/postHtml.js';
 
 const slug = Astro.params.slug;
 const { post, previousPost, nextPost } = slug
@@ -14,38 +13,68 @@ if (!post) {
   Astro.response.status = 404;
 }
 
-const html = post
-  ? sanitizeHtml(marked.parse(post.body_markdown || ''), {
-      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'pre', 'code']),
-      allowedAttributes: {
-        ...sanitizeHtml.defaults.allowedAttributes,
-        a: ['href', 'name', 'target', 'rel'],
-        img: ['src', 'alt', 'title'],
-      },
-    })
-  : '';
+const html = post ? renderPostHtml(post.body_markdown || '') : '';
 
 const postUrl = post ? `https://ixuvo.com/blog/${post.slug}` : '';
 const shareTitle = post?.title || 'isuvo blog post';
 const encodedPostUrl = encodeURIComponent(postUrl);
 const encodedShareTitle = encodeURIComponent(shareTitle);
+
+function buildPostSeoDescription(currentPost: typeof post) {
+  if (!currentPost) return 'Requested blog post could not be found.';
+
+  const source = String(currentPost.summary || currentPost.excerpt || 'Read this post on isuvo.')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const seoTitle = currentPost.title.length > 100
+    ? `${currentPost.title.slice(0, 99).trim()}…`
+    : currentPost.title;
+  const suffix = ` — ${seoTitle}`;
+  const available = Math.max(24, 180 - suffix.length);
+  const excerpt = source.length > available
+    ? `${source.slice(0, available - 1).replace(/\s+\S*$/, '').trim()}…`
+    : source;
+
+  return `${excerpt}${suffix}`;
+}
+
+const postSeoDescription = buildPostSeoDescription(post);
 ---
 
 <BaseLayout
   title={post ? `${post.title} | isuvo` : 'Post not found | isuvo'}
-  description={post?.summary || 'Requested blog post could not be found.'}
+  description={postSeoDescription}
+  canonical={post ? `/blog/${post.slug}` : null}
+  image={post?.cover_image_url && !post.cover_image_url.endsWith('.svg') ? post.cover_image_url : undefined}
+  imageAlt={post ? `${post.title} — isuvo` : undefined}
+  type={post ? 'article' : 'website'}
+  noindex={!post}
+  publishedTime={post?.published_at || post?.created}
+  modifiedTime={post?.updated}
+  tags={post?.tags || []}
 >
   {post ? (
     <>
+      <nav class="post-breadcrumb" aria-label="Breadcrumb">
+        <a href="/blog">
+          <span class="post-breadcrumb-icon" aria-hidden="true">&#8592;</span>
+          <span>Back to Blog</span>
+        </a>
+      </nav>
       <section class="hero">
-        <div class="post-top-nav">
-          <a href="/blog">Back to Blog</a>
-        </div>
-        <h1>{post.title}</h1>
-        <p class="lead-copy">{post.summary}</p>
+        <h1 data-translate-title>{post.title}</h1>
+        <p class="lead-copy" data-translate-summary>{post.summary}</p>
       </section>
       <section class="section">
         <article class="panel">
+          <div class="translate-box" data-translate-box data-post-slug={post.slug}>
+            <span>Translate</span>
+            <button type="button" class="is-active" data-translate-language="en">English</button>
+            <button type="button" data-translate-language="fr">Français</button>
+            <button type="button" data-translate-language="bn">বাংলা</button>
+            <button type="button" data-translate-language="es">Español</button>
+            <small data-translate-status></small>
+          </div>
           <div class="meta">
             {post.published_at ? new Date(post.published_at).toLocaleDateString('en-CA') : 'Unscheduled'}
             {' | '}
@@ -68,14 +97,16 @@ const encodedShareTitle = encodeURIComponent(shareTitle);
             </p>
           ) : null}
           {post.cover_image_url ? <img class="cover-image" src={post.cover_image_url} alt={post.title} /> : null}
-          {post.filter_label ? (
+          {post.display_tags?.length ? (
             <div class="pill-row" style="margin-bottom:1rem;">
-              <span class={`pill post-tag${post.filter_tag === 'legacy' ? ' legacy-tag' : ''}`}>
-                {post.filter_label}
-              </span>
+              {post.display_tags.map((tag) => (
+                <span class={`pill post-tag${tag.value === 'legacy' ? ' legacy-tag' : ''}`}>
+                  {tag.label}
+                </span>
+              ))}
             </div>
           ) : null}
-          <div class="post-content" set:html={html}></div>
+          <div class="post-content" data-translate-content set:html={html}></div>
           {post.source_urls?.length ? (
             <>
               <h2 style="margin-top:1.8rem;">Sources</h2>
@@ -96,28 +127,57 @@ const encodedShareTitle = encodeURIComponent(shareTitle);
           </div>
           <nav class="post-nav" aria-label="Post navigation">
             {previousPost ? (
-              <a class="cta" href={`/blog/${previousPost.slug}`}>Previous: {previousPost.title}</a>
-            ) : <span></span>}
+              <a class="post-nav-link post-nav-older" href={`/blog/${previousPost.slug}`}>
+                <span class="post-nav-direction" data-translate-previous-label><span class="post-nav-icon" aria-hidden="true">&#10094;</span> Older post</span>
+                <strong data-translate-previous-title>{previousPost.title}</strong>
+              </a>
+            ) : null}
             {nextPost ? (
-              <a class="cta" href={`/blog/${nextPost.slug}`}>Next: {nextPost.title}</a>
-            ) : <span></span>}
+              <a class="post-nav-link post-nav-newer" href={`/blog/${nextPost.slug}`}>
+                <span class="post-nav-direction" data-translate-next-label>Newer post <span class="post-nav-icon" aria-hidden="true">&#10095;</span></span>
+                <strong data-translate-next-title>{nextPost.title}</strong>
+              </a>
+            ) : null}
           </nav>
         </article>
       </section>
       <style>
-        .post-top-nav {
-          margin-bottom: 0.85rem;
+        .post-breadcrumb {
+          display: flex;
+          justify-content: flex-start;
+          padding-top: 1.15rem;
         }
 
-        .post-top-nav a {
-          color: var(--accent-soft);
-          font-size: 0.88rem;
+        .post-breadcrumb a {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          min-height: 2.5rem;
+          padding: 0.5rem 0.75rem;
+          border: 1px solid var(--line-soft);
+          border-radius: 0.5rem;
+          color: var(--muted);
+          background: var(--button-surface);
+          font-family: "IBM Plex Mono", "Courier New", monospace;
+          font-size: 0.84rem;
+          font-weight: 700;
           text-decoration: none;
-          letter-spacing: 0.04em;
+          transition: color 160ms ease, border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
         }
 
-        .post-top-nav a::before {
-          content: "< ";
+        .post-breadcrumb a:hover,
+        .post-breadcrumb a:focus-visible {
+          color: var(--ink);
+          border-color: var(--accent);
+          background: rgba(255, 138, 52, 0.1);
+          transform: translateX(-0.12rem);
+          outline: none;
+        }
+
+        .post-breadcrumb-icon {
+          color: var(--accent);
+          font-size: 1rem;
+          line-height: 1;
         }
 
         .author-line {
@@ -138,6 +198,42 @@ const encodedShareTitle = encodeURIComponent(shareTitle);
         .author-line a {
           color: var(--accent-soft);
           text-decoration: none;
+        }
+
+        .translate-box {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 0.55rem;
+          margin-bottom: 1rem;
+          padding: 0.75rem;
+          border: 1px solid var(--line-soft);
+          background: rgba(158, 184, 191, 0.07);
+        }
+
+        .translate-box > span {
+          color: var(--ink);
+          font-weight: 700;
+          margin-right: 0.15rem;
+        }
+
+        .translate-box button {
+          border-color: var(--line-soft);
+          color: var(--accent-soft);
+          padding: 0.42rem 0.6rem;
+          font-size: 0.82rem;
+          line-height: 1;
+        }
+
+        .translate-box button.is-active {
+          border-color: var(--accent);
+          color: var(--ink);
+          background: rgba(255, 138, 52, 0.12);
+        }
+
+        .translate-box small {
+          color: var(--accent-cool);
+          min-height: 1em;
         }
 
         .share-box {
@@ -189,19 +285,255 @@ const encodedShareTitle = encodeURIComponent(shareTitle);
           margin-top: 2rem;
         }
 
-        .post-nav .cta {
-          justify-content: center;
-          text-align: center;
+        .post-nav-link {
+          display: grid;
+          align-content: center;
+          gap: 0.65rem;
+          min-height: 7rem;
+          padding: 1.1rem 1.25rem;
+          border: 1px solid var(--line-soft);
+          border-radius: 6px;
+          color: var(--ink);
+          background: rgba(255, 255, 255, 0.025);
+          text-decoration: none;
+          transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+        }
+
+        .post-nav-link:hover,
+        .post-nav-link:focus-visible {
+          border-color: var(--accent);
+          background: rgba(255, 138, 52, 0.08);
+          transform: translateY(-1px);
+        }
+
+        .post-nav-direction {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          color: var(--accent-soft);
+          font-size: 0.84rem;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .post-nav-link strong {
+          font-size: 1.05rem;
+          font-weight: 800;
+          line-height: 1.35;
+        }
+
+        .post-nav-icon {
+          display: inline-grid;
+          place-items: center;
+          width: 2.5rem;
+          height: 2.5rem;
+          border: 1px solid var(--accent);
+          border-radius: 6px;
+          color: var(--ink);
+          background: rgba(255, 138, 52, 0.12);
+          font-size: 1.25rem;
+          line-height: 1;
+        }
+
+        .post-nav-newer {
+          grid-column: 2;
+          text-align: right;
+        }
+
+        .post-nav-newer .post-nav-direction {
+          justify-content: flex-end;
         }
 
         @media (max-width: 760px) {
           .post-nav {
             grid-template-columns: 1fr;
           }
+
+          .post-nav-newer {
+            grid-column: 1;
+          }
         }
       </style>
       <script is:inline>
+        const translateBox = document.querySelector('[data-translate-box]');
         const shareBox = document.querySelector('[data-share-box]');
+
+        if (translateBox) {
+          const postSlug = translateBox.dataset.postSlug || '';
+          const buttons = Array.from(translateBox.querySelectorAll('[data-translate-language]'));
+          const status = translateBox.querySelector('[data-translate-status]');
+          const title = document.querySelector('[data-translate-title]');
+          const summary = document.querySelector('[data-translate-summary]');
+          const content = document.querySelector('[data-translate-content]');
+          const previousLabel = document.querySelector('[data-translate-previous-label]');
+          const previousTitle = document.querySelector('[data-translate-previous-title]');
+          const nextLabel = document.querySelector('[data-translate-next-label]');
+          const nextTitle = document.querySelector('[data-translate-next-title]');
+          const navLinks = Array.from(document.querySelectorAll('.post-nav-link'));
+          const original = {
+            documentTitle: document.title,
+            title: title?.textContent || '',
+            summary: summary?.textContent || '',
+            contentHtml: content?.innerHTML || '',
+            previousLabel: previousLabel?.textContent || '',
+            previousTitle: previousTitle?.textContent || '',
+            nextLabel: nextLabel?.textContent || '',
+            nextTitle: nextTitle?.textContent || '',
+            navHrefs: navLinks.map((link) => link.getAttribute('href') || ''),
+          };
+
+          function setTranslateStatus(message) {
+            if (!status) return;
+            status.textContent = message;
+          }
+
+          function setActiveLanguage(language) {
+            buttons.forEach((button) => {
+              const isActive = button.dataset.translateLanguage === language;
+              button.classList.toggle('is-active', isActive);
+              button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+          }
+
+          function updateNavLanguage(language) {
+            navLinks.forEach((link, index) => {
+              const href = original.navHrefs[index];
+              if (!href) return;
+              const url = new URL(href, window.location.origin);
+              if (language === 'en') {
+                url.searchParams.delete('lang');
+              } else {
+                url.searchParams.set('lang', language);
+              }
+              link.setAttribute('href', `${url.pathname}${url.search}`);
+            });
+          }
+
+          function applyTranslation(language, translation) {
+            if (title) title.textContent = translation.title || original.title;
+            if (summary) summary.textContent = translation.summary || original.summary;
+            if (content) content.innerHTML = translation.contentHtml || original.contentHtml;
+            if (previousLabel) {
+              const icon = previousLabel.querySelector('.post-nav-icon');
+              previousLabel.textContent = ` ${translation.previousLabel || original.previousLabel}`;
+              if (icon) previousLabel.prepend(icon);
+            }
+            if (previousTitle) previousTitle.textContent = translation.previousTitle || original.previousTitle;
+            if (nextLabel) {
+              const icon = nextLabel.querySelector('.post-nav-icon');
+              nextLabel.textContent = `${translation.nextLabel || original.nextLabel} `;
+              if (icon) nextLabel.append(icon);
+            }
+            if (nextTitle) nextTitle.textContent = translation.nextTitle || original.nextTitle;
+            document.documentElement.lang = language;
+            document.title = language === 'en' ? original.documentTitle : `${translation.title || original.title} | isuvo`;
+            updateNavLanguage(language);
+            setActiveLanguage(language);
+          }
+
+          function restoreEnglish() {
+            if (title) title.textContent = original.title;
+            if (summary) summary.textContent = original.summary;
+            if (content) content.innerHTML = original.contentHtml;
+            if (previousLabel) previousLabel.innerHTML = '<span class="post-nav-icon" aria-hidden="true">&#10094;</span> Older post';
+            if (previousTitle) previousTitle.textContent = original.previousTitle;
+            if (nextLabel) nextLabel.innerHTML = 'Newer post <span class="post-nav-icon" aria-hidden="true">&#10095;</span>';
+            if (nextTitle) nextTitle.textContent = original.nextTitle;
+            document.documentElement.lang = 'en';
+            document.title = original.documentTitle;
+            updateNavLanguage('en');
+            setActiveLanguage('en');
+            setTranslateStatus('');
+          }
+
+          async function requestTranslation(language) {
+            const controller = new AbortController();
+            const timeout = window.setTimeout(() => controller.abort(), 45_000);
+
+            try {
+              const response = await fetch('/api/translate-post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal,
+                body: JSON.stringify({ slug: postSlug, language }),
+              });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok) {
+                throw new Error(data.message || 'Translation failed.');
+              }
+              return data;
+            } catch (error) {
+              if (error instanceof Error && error.name === 'AbortError') {
+                throw new Error('Translation timed out. Please try again.');
+              }
+              throw error;
+            } finally {
+              window.clearTimeout(timeout);
+            }
+          }
+
+          async function translatePost(language) {
+            if (language === 'en') {
+              restoreEnglish();
+              const url = new URL(window.location.href);
+              url.searchParams.delete('lang');
+              window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+              return;
+            }
+
+            setActiveLanguage(language);
+            setTranslateStatus('Translating...');
+            buttons.forEach((button) => {
+              button.disabled = true;
+            });
+
+            try {
+              const cacheKey = `isuvo_translation:${postSlug}:${language}`;
+              const cached = sessionStorage.getItem(cacheKey);
+              let translation = null;
+
+              if (cached) {
+                try {
+                  translation = JSON.parse(cached);
+                } catch {
+                  sessionStorage.removeItem(cacheKey);
+                }
+              }
+
+              if (!translation) {
+                translation = await requestTranslation(language);
+                sessionStorage.setItem(cacheKey, JSON.stringify(translation));
+              }
+
+              applyTranslation(language, translation);
+              const url = new URL(window.location.href);
+              url.searchParams.set('lang', language);
+              window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+              setTranslateStatus('Translated.');
+            } catch (error) {
+              restoreEnglish();
+              setTranslateStatus(error instanceof Error ? error.message : 'Translation unavailable.');
+            } finally {
+              buttons.forEach((button) => {
+                button.disabled = false;
+              });
+            }
+          }
+
+          buttons.forEach((button) => {
+            button.addEventListener('click', () => {
+              translatePost(button.dataset.translateLanguage || 'en');
+            });
+          });
+
+          const requestedLanguage = new URLSearchParams(window.location.search).get('lang');
+          if (['fr', 'bn', 'es'].includes(requestedLanguage || '')) {
+            translatePost(requestedLanguage);
+          } else {
+            updateNavLanguage('en');
+          }
+        }
 
         if (shareBox) {
           const shareTitle = shareBox.dataset.shareTitle || document.title;

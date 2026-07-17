@@ -1,4 +1,8 @@
-const PB_URL = process.env.PB_URL || 'http://127.0.0.1:8090';
+const PB_URL = String(process.env.PB_URL || '').trim().replace(/\/$/, '');
+
+if (!PB_URL) {
+  throw new Error('PB_URL environment variable is required.');
+}
 
 function collectionUrl(name, query = {}) {
   const url = new URL(`/api/collections/${name}/records`, PB_URL);
@@ -85,7 +89,9 @@ const tagProfiles = [
   { value: 'ai', label: 'AI Systems', matches: ['ai', 'ml', 'agent', 'llm'] },
   { value: 'automation', label: 'Automation', matches: ['automation', 'workflow', 'process'] },
   { value: 'cloud', label: 'Cloud', matches: ['cloud', 'azure', 'aws', 'platform'] },
+  { value: 'security', label: 'Security', matches: ['security'] },
   { value: 'devsecops', label: 'DevSecOps', matches: ['devsecops', 'security', 'devops', 'ci/cd', 'cicd'] },
+  { value: 'system-design', label: 'System Design', matches: ['system-design', 'system design'] },
   { value: 'general', label: 'General', matches: ['general', 'misc', 'notes'] },
   { value: 'management', label: 'Management', matches: ['management', 'leadership', 'delivery', 'product', 'team'] },
   { value: 'ops', label: 'Ops', matches: ['ops', 'operations', 'monitoring', 'reliability', 'sre'] },
@@ -102,6 +108,19 @@ function tagProfileForPost(tags = [], legacyImported = false) {
   return tagProfiles.find((profile) =>
     normalized.some((tag) => profile.value === tag || profile.matches.some((match) => tag.includes(match)))
   ) || tagProfiles.find((profile) => profile.value === 'general') || tagProfiles[0];
+}
+
+function displayTags(tags = []) {
+  const seen = new Set();
+
+  return tags.flatMap((tag) => {
+    const label = String(tag || '').trim();
+    const value = label.toLowerCase();
+    if (!value || seen.has(value)) return [];
+    seen.add(value);
+    const profile = tagProfiles.find((item) => item.value === value);
+    return [{ value, label: profile?.label || label }];
+  });
 }
 
 function categoryForPost(tags = []) {
@@ -130,6 +149,7 @@ function normalizePost(record) {
     summary: cleanedSummary,
     excerpt,
     tags,
+    display_tags: displayTags(tags),
     source_urls: normalizeArray(record.source_urls),
     legacy_imported: Boolean(record.legacy_imported),
     legacy_source_url: record.legacy_source_url || '',
@@ -153,9 +173,47 @@ async function getAllPosts(limit = 200) {
   return (data.items || []).map(normalizePost);
 }
 
+export async function getPublishedPostsForSitemap() {
+  const pageSize = 200;
+  const records = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const url = collectionUrl('posts', {
+      filter: 'status = "published"',
+      sort: 'slug',
+      page,
+      perPage: pageSize,
+      fields: 'id,slug,status,updated',
+    });
+    const data = await readJson(url);
+
+    records.push(...(data.items || []));
+    totalPages = Math.max(1, Number(data.totalPages) || 1);
+    page += 1;
+  } while (page <= totalPages);
+
+  const seenSlugs = new Set();
+
+  return records.filter((record) => {
+    if (record.status !== 'published' || !record.slug || !record.updated) return false;
+    if (seenSlugs.has(record.slug)) return false;
+    seenSlugs.add(record.slug);
+    return true;
+  });
+}
+
 export async function getPublishedPosts(limit = 50) {
   const posts = await getAllPosts(Math.max(limit, 100));
-  return posts.filter((post) => post.status === 'published').slice(0, limit);
+  return posts
+    .filter((post) => post.status === 'published')
+    .sort((a, b) => {
+      const aDate = Date.parse(a.published_at || a.created || '') || 0;
+      const bDate = Date.parse(b.published_at || b.created || '') || 0;
+      return bDate - aDate;
+    })
+    .slice(0, limit);
 }
 
 export async function getRecentPostsForHome(limit = 6) {

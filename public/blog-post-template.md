@@ -6,7 +6,10 @@ slug: example-post-title
 summary: Write a clear one or two sentence summary of the post.
 status: draft
 published_at: 2026-01-01T09:00:00-05:00
-tags: [general]
+# Add as many relevant tags as needed. Common tags include general, ai,
+# automation, cloud, devsecops, security, system-design, management, ops,
+# and legacy.
+tags: [AI Security, Cloud, DevSecOps]
 source_urls: [https://example.com/source]
 linkedin_text: |
   Write the LinkedIn post text here.

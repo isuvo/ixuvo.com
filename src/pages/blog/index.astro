@@ -17,6 +17,8 @@ const filterOptions = [
   { value: 'automation', label: 'Automation' },
   { value: 'cloud', label: 'Cloud' },
   { value: 'devsecops', label: 'DevSecOps' },
+  { value: 'security', label: 'Security' },
+  { value: 'system-design', label: 'System Design' },
   { value: 'general', label: 'General' },
   { value: 'management', label: 'Management' },
   { value: 'ops', label: 'Ops' },
@@ -24,7 +26,11 @@ const filterOptions = [
 ];
 ---
 
-<BaseLayout title="Blog | isuvo" description="Published blog posts from the local-first site.">
+<BaseLayout
+  title="AI Systems, Cloud & DevSecOps Blog | isuvo"
+  description="Practical writing from isuvo on AI systems, cloud infrastructure, automation, security, and DevSecOps."
+  canonical="/blog"
+>
   <section class="hero">
     <h1>Blog</h1>
   </section>
@@ -76,14 +82,16 @@ const filterOptions = [
           {post.legacy_imported ? (
             <p class="legacy-note">Migrated from the original suvoBGD WordPress archive.</p>
           ) : null}
-          <div class="pill-row" style="margin-top:0.5rem;">
-            <button
-              type="button"
-              class={`tag-pill${post.filter_tag === 'legacy' ? ' legacy-tag' : ''}`}
-              data-tag-filter={post.filter_tag}
-            >
-              {post.filter_label}
-            </button>
+          <div class="pill-row post-tags" style="margin-top:0.5rem;">
+            {(post.display_tags?.length ? post.display_tags : [{ value: post.filter_tag, label: post.filter_label }]).map((tag) => (
+              <button
+                type="button"
+                class={`tag-pill${tag.value === 'legacy' ? ' legacy-tag' : ''}`}
+                data-tag-filter={tag.value}
+              >
+                {tag.label}
+              </button>
+            ))}
           </div>
         </article>
       )) : (

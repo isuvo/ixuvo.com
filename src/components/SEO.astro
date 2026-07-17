@@ -1,0 +1,69 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string | null;
+  image?: string;
+  imageAlt?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  tags?: string[];
+}
+
+const PRODUCTION_URL = new URL('https://ixuvo.com');
+const DEFAULT_SOCIAL_IMAGE = '/social-preview.png';
+
+const {
+  title,
+  description,
+  canonical = Astro.url.pathname,
+  image = DEFAULT_SOCIAL_IMAGE,
+  imageAlt = 'isuvo — AI Systems, Cloud, Automation, and DevSecOps',
+  type = 'website',
+  noindex = false,
+  publishedTime,
+  modifiedTime,
+  tags = [],
+} = Astro.props;
+
+function productionUrl(value: string, includeSearch = false) {
+  const parsed = new URL(value, PRODUCTION_URL);
+  const path = `${parsed.pathname}${includeSearch ? parsed.search : ''}`;
+  return new URL(path, PRODUCTION_URL).href;
+}
+
+const canonicalUrl = canonical === null ? null : productionUrl(canonical);
+const socialImageUrl = productionUrl(image, true);
+const usesDefaultSocialImage = new URL(image, PRODUCTION_URL).pathname === DEFAULT_SOCIAL_IMAGE;
+const robots = noindex ? 'noindex, nofollow' : 'index, follow';
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<meta name="robots" content={robots} />
+<meta name="googlebot" content={robots} />
+{canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+
+<meta property="og:locale" content="en_CA" />
+<meta property="og:site_name" content="isuvo" />
+<meta property="og:type" content={type} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+{canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
+<meta property="og:image" content={socialImageUrl} />
+<meta property="og:image:secure_url" content={socialImageUrl} />
+<meta property="og:image:alt" content={imageAlt} />
+{usesDefaultSocialImage ? <meta property="og:image:width" content="1200" /> : null}
+{usesDefaultSocialImage ? <meta property="og:image:height" content="630" /> : null}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImageUrl} />
+<meta name="twitter:image:alt" content={imageAlt} />
+
+{type === 'article' && publishedTime ? <meta property="article:published_time" content={publishedTime} /> : null}
+{type === 'article' && modifiedTime ? <meta property="article:modified_time" content={modifiedTime} /> : null}
+{type === 'article' ? tags.map((tag) => <meta property="article:tag" content={tag} />) : null}
