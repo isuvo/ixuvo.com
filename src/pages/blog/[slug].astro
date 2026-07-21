@@ -14,6 +14,7 @@ import {
   toIsoDate,
 } from '../../lib/seo.js';
 
+const cspNonce = Astro.locals.cspNonce;
 const slug = Astro.params.slug;
 const { post, previousPost, nextPost } = slug
   ? await getPublishedPostWithNeighbors(slug)
@@ -426,7 +427,7 @@ const blogPostingSchema = post ? {
           }
         }
       </style>
-      <script is:inline>
+      <script is:inline nonce={cspNonce} data-cfasync="false">
         const translateBox = document.querySelector('[data-translate-box]');
         const postActions = document.querySelector('[data-post-actions]');
 

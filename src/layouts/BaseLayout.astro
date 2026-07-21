@@ -17,6 +17,7 @@ const {
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
+const cspNonce = Astro.locals.cspNonce;
 const year = new Date().getFullYear();
 const privatePath = currentPath === '/write'
   || currentPath.startsWith('/write/')
@@ -37,8 +38,8 @@ function navProps(path: string) {
 <html lang="en-CA">
   <head>
     <!-- Google tag (gtag.js) -->
-    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-KGG1QMLFS6"></script>
-    <script is:inline>
+    <script is:inline nonce={cspNonce} data-cfasync="false" async src="https://www.googletagmanager.com/gtag/js?id=G-KGG1QMLFS6"></script>
+    <script is:inline nonce={cspNonce} data-cfasync="false">
       window.dataLayer = window.dataLayer || [];
       function gtag(){
         // eslint-disable-next-line prefer-rest-params -- Google's loader queues variadic commands through arguments.
@@ -49,7 +50,7 @@ function navProps(path: string) {
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script type="text/javascript" is:inline>
+    <script type="text/javascript" is:inline nonce={cspNonce} data-cfasync="false">
       (function(c,l,a,r,i,t,y){
           // eslint-disable-next-line prefer-rest-params -- Microsoft Clarity's loader queues calls before its script loads.
           c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -79,7 +80,7 @@ function navProps(path: string) {
     <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#050505" />
-    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script is:inline nonce={cspNonce} data-cfasync="false">document.documentElement.classList.add('js');</script>
     <style is:global>
       :root {
         --bg: #050505;
@@ -1462,7 +1463,7 @@ function navProps(path: string) {
       </footer>
     </div>
     <button type="button" id="back-to-top" class="back-to-top" aria-label="Back to top">↑</button>
-    <script is:inline>
+    <script is:inline nonce={cspNonce} data-cfasync="false">
       const storageKey = 'isuvo_theme';
       const root = document.documentElement;
       const toggle = document.getElementById('theme-toggle');

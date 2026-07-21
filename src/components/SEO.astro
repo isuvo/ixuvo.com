@@ -46,6 +46,7 @@ const serializedJsonLd = jsonLd
       .replace(/\u2028/g, '\\u2028')
       .replace(/\u2029/g, '\\u2029')
   : '';
+const cspNonce = Astro.locals.cspNonce;
 ---
 
 <title>{title}</title>
@@ -77,4 +78,4 @@ const serializedJsonLd = jsonLd
 {type === 'article' && publishedTime ? <meta property="article:published_time" content={publishedTime} /> : null}
 {type === 'article' && modifiedTime ? <meta property="article:modified_time" content={modifiedTime} /> : null}
 {type === 'article' ? tags.map((tag) => <meta property="article:tag" content={tag} />) : null}
-{serializedJsonLd ? <script is:inline type="application/ld+json" set:html={serializedJsonLd}></script> : null}
+{serializedJsonLd ? <script is:inline nonce={cspNonce} type="application/ld+json" set:html={serializedJsonLd}></script> : null}

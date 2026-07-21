@@ -5,6 +5,7 @@ import { profile } from '../lib/profile.js';
 import { getGitHubActivity, getGitHubRepos } from '../lib/github.js';
 import { getRecentPostsForHome } from '../lib/pocketbase.js';
 
+const cspNonce = Astro.locals.cspNonce;
 let posts: any[] = [];
 let repos: any[] = [];
 let activity: { total: string; cells: any[]; monthLabels: any[] } = { total: '0', cells: [], monthLabels: [] };
@@ -315,7 +316,7 @@ try {
         </div>
       </div>
     </article>
-    <script is:inline data-cfasync="false" async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
+    <script is:inline nonce={cspNonce} data-cfasync="false" async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
   </section>
 
   <style>

@@ -1,6 +1,12 @@
 import type { APIRoute } from 'astro';
 import { getPublishedPostWithNeighbors } from '../../lib/pocketbase.js';
 import { renderPostHtml, sanitizePostHtml } from '../../lib/postHtml.js';
+import {
+  clientAddress,
+  exceedsContentLength,
+  isSameOriginRequest,
+  takeRateLimit,
+} from '../../lib/security.js';
 
 const targetLanguages = {
   fr: 'French',
@@ -9,6 +15,9 @@ const targetLanguages = {
 } as const;
 
 type TargetLanguage = keyof typeof targetLanguages;
+
+const translationCache = new Map<string, { expiresAt: number; value: unknown }>();
+const translationCacheTtlMs = 6 * 60 * 60 * 1000;
 
 const protectedPattern = /<(pre|code|svg|script|style)\b[\s\S]*?<\/\1>|<img\b[^>]*>/gi;
 
@@ -24,9 +33,6 @@ function json(data: unknown, status = 200) {
 
 function apiKey() {
   return (
-    import.meta.env.GEMINI_API_KEY ||
-    import.meta.env.GOOGLE_GEMINI_API_KEY ||
-    import.meta.env.GOOGLE_API_KEY ||
     process.env.GEMINI_API_KEY ||
     process.env.GOOGLE_GEMINI_API_KEY ||
     process.env.GOOGLE_API_KEY ||
@@ -105,7 +111,7 @@ async function translateWithGemini(payload: Record<string, unknown>, language: T
   }
 
   const modelCandidates = [
-    import.meta.env.GEMINI_MODEL || process.env.GEMINI_MODEL || '',
+    process.env.GEMINI_MODEL || '',
     'gemini-3.5-flash',
     'gemini-3.1-flash-lite',
     'gemini-2.5-flash',
@@ -182,6 +188,14 @@ async function translateWithGemini(payload: Record<string, unknown>, language: T
 }
 
 export const POST: APIRoute = async ({ request }) => {
+  if (!isSameOriginRequest(request)) {
+    return json({ message: 'Cross-site requests are not allowed.' }, 403);
+  }
+
+  if (exceedsContentLength(request, 2048)) {
+    return json({ message: 'Translation request is too large.' }, 413);
+  }
+
   let body;
   try {
     body = await request.json();
@@ -192,7 +206,7 @@ export const POST: APIRoute = async ({ request }) => {
   const slug = String(body?.slug || '').trim();
   const language = String(body?.language || 'en') as TargetLanguage | 'en';
 
-  if (!slug) {
+  if (!slug || slug.length > 160 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
     return json({ message: 'Missing blog post slug.' }, 400);
   }
 
@@ -207,6 +221,25 @@ export const POST: APIRoute = async ({ request }) => {
   const { post, previousPost, nextPost } = await getPublishedPostWithNeighbors(slug);
   if (!post) {
     return json({ message: 'Post not found.' }, 404);
+  }
+
+  const cacheKey = `${slug}:${language}:${post.updated || post.published_at || ''}`;
+  const cached = translationCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return json(cached.value);
+  }
+  if (cached) translationCache.delete(cacheKey);
+
+  const rateLimit = takeRateLimit(`translate:${clientAddress(request)}`, 10, 10 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return new Response(JSON.stringify({ message: 'Translation limit reached. Please try again later.' }), {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Retry-After': String(rateLimit.retryAfter),
+      },
+    });
   }
 
   const { maskedHtml, protectedBlocks } = maskProtectedHtml(renderPostHtml(post.body_markdown || ''));
@@ -225,11 +258,11 @@ export const POST: APIRoute = async ({ request }) => {
       language
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Translation failed.';
-    return json({ message }, 502);
+    console.error('[translation-error]', error instanceof Error ? error.message : 'Translation failed.');
+    return json({ message: 'Translation is temporarily unavailable. Please try again.' }, 502);
   }
 
-  return json({
+  const responseData = {
     language,
     title: String(translation.title || post.title),
     summary: String(translation.summary || post.summary || ''),
@@ -238,5 +271,11 @@ export const POST: APIRoute = async ({ request }) => {
     previousTitle: String(translation.previousTitle || previousPost?.title || ''),
     nextLabel: String(translation.nextLabel || 'Newer post'),
     nextTitle: String(translation.nextTitle || nextPost?.title || ''),
-  });
+  };
+
+  if (translationCache.size >= 100) {
+    translationCache.delete(translationCache.keys().next().value || '');
+  }
+  translationCache.set(cacheKey, { expiresAt: Date.now() + translationCacheTtlMs, value: responseData });
+  return json(responseData);
 };

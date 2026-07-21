@@ -1,4 +1,11 @@
 import type { APIRoute } from 'astro';
+import {
+  clearRateLimit,
+  clientAddress,
+  exceedsContentLength,
+  isSameOriginRequest,
+  takeRateLimit,
+} from '../../lib/security.js';
 
 const pbUrl = String(import.meta.env.PB_URL || '').trim().replace(/\/$/, '');
 const cookieName = 'ixuvo_writer_session';
@@ -11,7 +18,10 @@ if (!pbUrl) {
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+    },
   });
 }
 
@@ -25,6 +35,14 @@ async function refreshWriter(token: string) {
 }
 
 export const POST: APIRoute = async ({ request, cookies }) => {
+  if (!isSameOriginRequest(request)) {
+    return json({ message: 'Cross-site requests are not allowed.' }, 403);
+  }
+
+  if (exceedsContentLength(request, 4096)) {
+    return json({ message: 'Login request is too large.' }, 413);
+  }
+
   let credentials;
   try {
     credentials = await request.json();
@@ -37,18 +55,40 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return json({ ok: true });
   }
 
-  const response = await fetch(`${pbUrl}/api/collections/blog_authors/auth-with-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      identity: credentials?.identity,
-      password: credentials?.password,
-    }),
-  });
-  const data = await response.json().catch(() => ({}));
+  const identity = typeof credentials?.identity === 'string' ? credentials.identity.trim() : '';
+  const password = typeof credentials?.password === 'string' ? credentials.password : '';
+  if (!identity || !password || identity.length > 320 || password.length > 1024) {
+    return json({ message: 'Invalid email or password.' }, 401);
+  }
+
+  const rateLimitKey = `writer-login:${clientAddress(request)}`;
+  const rateLimit = takeRateLimit(rateLimitKey, 5, 15 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return new Response(JSON.stringify({ message: 'Too many login attempts. Please try again later.' }), {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Retry-After': String(rateLimit.retryAfter),
+      },
+    });
+  }
+
+  let response;
+  let data;
+  try {
+    response = await fetch(`${pbUrl}/api/collections/blog_authors/auth-with-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identity, password }),
+    });
+    data = await response.json().catch(() => ({}));
+  } catch {
+    return json({ message: 'Login service is temporarily unavailable.' }, 502);
+  }
 
   if (!response.ok) {
-    return json(data, response.status);
+    return json({ message: 'Invalid email or password.' }, 401);
   }
 
   if (data.record?.verified !== true) {
@@ -62,6 +102,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     path: '/',
     maxAge: sessionSeconds,
   });
+  clearRateLimit(rateLimitKey);
 
   return json({
     record: data.record,
@@ -84,7 +125,10 @@ export const GET: APIRoute = async ({ cookies }) => {
   return json({ record: data.record });
 };
 
-export const DELETE: APIRoute = ({ cookies }) => {
+export const DELETE: APIRoute = ({ request, cookies }) => {
+  if (!isSameOriginRequest(request)) {
+    return json({ message: 'Cross-site requests are not allowed.' }, 403);
+  }
   cookies.delete(cookieName, { path: '/' });
   return new Response(null, { status: 204 });
 };

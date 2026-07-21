@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 
+const cspNonce = Astro.locals.cspNonce;
 const pocketbaseUrl = String(import.meta.env.PB_URL || '').trim().replace(/\/$/, '');
 const writerCookieName = 'ixuvo_writer_session';
 const adminUiUrl = 'https://pb.ixuvo.com/_/#/';
@@ -40,7 +41,7 @@ const writerAuthenticated = Boolean(writerRecord);
   <section class="hero">
     <h1>Write</h1>
     <p class="lead-copy">
-      Manage blog posts, drafts, publishing, and deletion in one place (PocketBase).
+      Manage blog posts, drafts, publishing, and deletion from one secure workspace.
     </p>
   </section>
 
@@ -64,7 +65,7 @@ const writerAuthenticated = Boolean(writerRecord);
         </form>
         <p class="helper" style="margin-top:0.8rem;">Public signup is disabled.</p>
         <p class="helper" style="margin-top:0.4rem;">
-          PocketBase admin UI: <a href={adminUiUrl} target="_blank" rel="noreferrer">{adminUiUrl}</a>
+          Control Room: <a href={adminUiUrl} target="_blank" rel="noreferrer">Open console</a>
         </p>
         <p id="auth-status" class="status-line" style="margin-top:0.8rem;"></p>
       </article>
@@ -196,12 +197,19 @@ const writerAuthenticated = Boolean(writerRecord);
   </section>
   ) : null}
 
-  <script define:vars={{ writerAuthenticated, writerRecord }} is:inline>
+  <script
+    is:inline
+    nonce={cspNonce}
+    data-cfasync="false"
+    data-writer-authenticated={String(writerAuthenticated)}
+    data-writer-record={JSON.stringify(writerRecord)}
+  >
     const authKey = 'isuvo_pb_auth';
     const sessionMs = 4 * 60 * 60 * 1000;
     const pageSize = 12;
-    const initialWriterAuthenticated = writerAuthenticated === true;
-    const initialWriterRecord = writerRecord;
+    const writerScript = document.currentScript;
+    const initialWriterAuthenticated = writerScript?.dataset.writerAuthenticated === 'true';
+    const initialWriterRecord = JSON.parse(writerScript?.dataset.writerRecord || 'null');
     const loginForm = document.getElementById('login-form');
     const postForm = document.getElementById('post-form');
     const editorAvailable = Boolean(postForm);
@@ -899,7 +907,7 @@ const writerAuthenticated = Boolean(writerRecord);
       try {
         await fetchPosts();
       } catch (error) {
-        postList.innerHTML = `<p class="helper">${error instanceof Error ? error.message : 'Failed to load posts.'}</p>`;
+        postList.innerHTML = `<p class="helper">${escapeHtml(error instanceof Error ? error.message : 'Failed to load posts.')}</p>`;
       }
     }
 
@@ -1173,7 +1181,7 @@ const writerAuthenticated = Boolean(writerRecord);
         const currentImages = Array.isArray(data.embedded_images) ? data.embedded_images : [];
         const newImages = currentImages.filter((filename) => !previousImages.includes(filename)).slice(-files.length);
         if (newImages.length !== files.length) {
-          const message = `Upload incomplete. PocketBase confirmed ${newImages.length} of ${files.length} image${files.length === 1 ? '' : 's'}.`;
+          const message = `Upload incomplete. The server confirmed ${newImages.length} of ${files.length} image${files.length === 1 ? '' : 's'}.`;
           setEmbeddedUploadStatus(message, 'error');
           editorStatus.textContent = message;
           return;

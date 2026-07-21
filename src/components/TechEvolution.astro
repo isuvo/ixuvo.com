@@ -1,4 +1,5 @@
 ---
+const cspNonce = Astro.locals.cspNonce;
 const eras = [
   {
     era: '2010+',
@@ -160,10 +161,10 @@ const maxTotal = totals.at(-1) ?? 1;
     <span><i style="--legend-color: #f43f5e"></i>Leadership</span>
   </div>
 
-  <script is:inline type="application/json" data-evolution-data set:html={JSON.stringify(eras)}></script>
+  <script is:inline nonce={cspNonce} type="application/json" data-evolution-data set:html={JSON.stringify(eras)}></script>
 </div>
 
-<script is:inline>
+<script is:inline nonce={cspNonce} data-cfasync="false">
   function initializeEvolutionWidgets() {
     document.querySelectorAll('[data-evolution-widget]').forEach((widget) => {
       if (!(widget instanceof HTMLElement) || widget.dataset.initialized === 'true') return;
