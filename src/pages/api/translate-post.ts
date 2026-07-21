@@ -190,7 +190,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const slug = String(body?.slug || '').trim();
-  const language = String(body?.language || 'en') as TargetLanguage;
+  const language = String(body?.language || 'en') as TargetLanguage | 'en';
 
   if (!slug) {
     return json({ message: 'Missing blog post slug.' }, 400);

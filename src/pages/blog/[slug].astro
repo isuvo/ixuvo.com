@@ -3,6 +3,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getPublishedPostWithNeighbors } from '../../lib/pocketbase.js';
 import { profile } from '../../lib/profile.js';
 import { renderPostHtml } from '../../lib/postHtml.js';
+import { seoTitleOverrides } from '../../data/seo-title-overrides';
+import { seoDescriptionOverrides } from '../../data/seo-description-overrides';
+import { relatedPosts } from '../../data/related-posts';
+import { blogCanonicalForSlug, blogPathForSlug } from '../../lib/blogUrls.js';
+import {
+  absoluteProductionUrl,
+  buildPostMetaDescription,
+  buildPostSeoTitle,
+  toIsoDate,
+} from '../../lib/seo.js';
 
 const slug = Astro.params.slug;
 const { post, previousPost, nextPost } = slug
@@ -15,43 +25,65 @@ if (!post) {
 
 const html = post ? renderPostHtml(post.body_markdown || '') : '';
 
-const postUrl = post ? `https://ixuvo.com/blog/${post.slug}` : '';
+const postUrl = post ? blogCanonicalForSlug(post.slug) : '';
+const canonicalPath = post ? blogPathForSlug(post.slug) : null;
+const relatedPostGroup = post ? relatedPosts[post.slug] : null;
 const shareTitle = post?.title || 'isuvo blog post';
 const encodedPostUrl = encodeURIComponent(postUrl);
 const encodedShareTitle = encodeURIComponent(shareTitle);
-
-function buildPostSeoDescription(currentPost: typeof post) {
-  if (!currentPost) return 'Requested blog post could not be found.';
-
-  const source = String(currentPost.summary || currentPost.excerpt || 'Read this post on isuvo.')
-    .replace(/\s+/g, ' ')
-    .trim();
-  const seoTitle = currentPost.title.length > 100
-    ? `${currentPost.title.slice(0, 99).trim()}…`
-    : currentPost.title;
-  const suffix = ` — ${seoTitle}`;
-  const available = Math.max(24, 180 - suffix.length);
-  const excerpt = source.length > available
-    ? `${source.slice(0, available - 1).replace(/\s+\S*$/, '').trim()}…`
-    : source;
-
-  return `${excerpt}${suffix}`;
-}
-
-const postSeoDescription = buildPostSeoDescription(post);
+const postSeoTitle = post
+  ? buildPostSeoTitle(post, seoTitleOverrides)
+  : 'Post not found | Shuvo';
+const postSeoDescription = post
+  ? buildPostMetaDescription(post, seoDescriptionOverrides)
+  : 'The requested blog post could not be found.';
+const publishedTime = post ? toIsoDate(post.published_at || post.created) : '';
+const modifiedTime = post ? toIsoDate(post.updated) : '';
+const absoluteCoverUrl = post?.cover_image_url ? absoluteProductionUrl(post.cover_image_url) : '';
+const articleSection = String(post?.category || '').trim();
+const keywords = Array.isArray(post?.tags)
+  ? post.tags.map((tag: unknown) => String(tag).trim()).filter(Boolean).join(', ')
+  : '';
+const schemaPerson = {
+  '@type': 'Person',
+  '@id': 'https://ixuvo.com/#person',
+  name: 'Shuvo',
+  url: 'https://ixuvo.com/',
+};
+const blogPostingSchema = post ? {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  '@id': `${postUrl}#blogposting`,
+  url: postUrl,
+  headline: post.title,
+  description: postSeoDescription,
+  author: schemaPerson,
+  publisher: schemaPerson,
+  ...(publishedTime ? { datePublished: publishedTime } : {}),
+  ...(modifiedTime ? { dateModified: modifiedTime } : {}),
+  ...(absoluteCoverUrl ? { image: [absoluteCoverUrl] } : {}),
+  ...(articleSection ? { articleSection } : {}),
+  ...(keywords ? { keywords } : {}),
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id': postUrl,
+  },
+  inLanguage: 'en-CA',
+} : null;
 ---
 
 <BaseLayout
-  title={post ? `${post.title} | isuvo` : 'Post not found | isuvo'}
+  title={postSeoTitle}
   description={postSeoDescription}
-  canonical={post ? `/blog/${post.slug}` : null}
+  canonical={canonicalPath}
   image={post?.cover_image_url && !post.cover_image_url.endsWith('.svg') ? post.cover_image_url : undefined}
-  imageAlt={post ? `${post.title} — isuvo` : undefined}
+  imageAlt={post ? `${post.title} — Shuvo` : undefined}
   type={post ? 'article' : 'website'}
   noindex={!post}
-  publishedTime={post?.published_at || post?.created}
-  modifiedTime={post?.updated}
+  publishedTime={publishedTime}
+  modifiedTime={modifiedTime}
   tags={post?.tags || []}
+  jsonLd={blogPostingSchema}
 >
   {post ? (
     <>
@@ -107,6 +139,17 @@ const postSeoDescription = buildPostSeoDescription(post);
             </div>
           ) : null}
           <div class="post-content" data-translate-content set:html={html}></div>
+          {relatedPostGroup?.links.length ? (
+            <aside class="related-posts" aria-labelledby="related-posts-title">
+              <h2 id="related-posts-title">Related technical articles</h2>
+              <p>{relatedPostGroup.cluster}</p>
+              <ul>
+                {relatedPostGroup.links.map((item) => (
+                  <li><a href={blogPathForSlug(item.slug)}>{item.anchor}</a></li>
+                ))}
+              </ul>
+            </aside>
+          ) : null}
           {post.source_urls?.length ? (
             <>
               <h2 style="margin-top:1.8rem;">Sources</h2>
@@ -117,13 +160,13 @@ const postSeoDescription = buildPostSeoDescription(post);
               </ul>
             </>
           ) : null}
-          <div class="share-box" data-share-box data-share-title={shareTitle} data-share-url={postUrl}>
+          <div class="post-actions-box" data-post-actions data-post-title={shareTitle} data-post-url={postUrl}>
             <span>Share this post</span>
-            <button type="button" data-native-share>Share</button>
+            <button type="button" data-post-action>Share</button>
             <a href={`https://x.com/intent/tweet?text=${encodedShareTitle}&url=${encodedPostUrl}`} target="_blank" rel="noreferrer">X</a>
             <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedPostUrl}`} target="_blank" rel="noreferrer">LinkedIn</a>
             <a href={`mailto:?subject=${encodedShareTitle}&body=${encodedPostUrl}`}>Email</a>
-            <small data-share-status></small>
+            <small data-post-action-status aria-live="polite"></small>
           </div>
           <nav class="post-nav" aria-label="Post navigation">
             {previousPost ? (
@@ -142,6 +185,34 @@ const postSeoDescription = buildPostSeoDescription(post);
         </article>
       </section>
       <style>
+        .related-posts {
+          margin-top: 1.8rem;
+          padding: 1rem 1.1rem;
+          border: 1px solid var(--line-soft);
+          border-radius: 0.65rem;
+          background: var(--button-surface);
+        }
+
+        .related-posts h2 {
+          margin: 0 0 0.25rem;
+          font-size: 1.05rem;
+        }
+
+        .related-posts p {
+          margin: 0 0 0.65rem;
+          color: var(--muted);
+          font-size: 0.88rem;
+        }
+
+        .related-posts ul {
+          margin: 0;
+          padding-left: 1.2rem;
+        }
+
+        .related-posts li + li {
+          margin-top: 0.35rem;
+        }
+
         .post-breadcrumb {
           display: flex;
           justify-content: flex-start;
@@ -236,7 +307,7 @@ const postSeoDescription = buildPostSeoDescription(post);
           min-height: 1em;
         }
 
-        .share-box {
+        .post-actions-box {
           display: flex;
           flex-wrap: wrap;
           align-items: center;
@@ -247,14 +318,14 @@ const postSeoDescription = buildPostSeoDescription(post);
           background: rgba(255, 138, 52, 0.05);
         }
 
-        .share-box > span {
+        .post-actions-box > span {
           color: var(--ink);
-          font-weight: 700;
+          font-weight: var(--weight-semibold);
           margin-right: 0.15rem;
         }
 
-        .share-box a,
-        .share-box button {
+        .post-actions-box a,
+        .post-actions-box button {
           color: var(--accent-soft);
           border: 1px solid var(--line-soft);
           padding: 0.42rem 0.6rem;
@@ -263,11 +334,11 @@ const postSeoDescription = buildPostSeoDescription(post);
           line-height: 1;
         }
 
-        .share-box button {
+        .post-actions-box button {
           background: transparent;
         }
 
-        .share-box small {
+        .post-actions-box small {
           color: var(--accent-cool);
           min-height: 1em;
         }
@@ -357,7 +428,7 @@ const postSeoDescription = buildPostSeoDescription(post);
       </style>
       <script is:inline>
         const translateBox = document.querySelector('[data-translate-box]');
-        const shareBox = document.querySelector('[data-share-box]');
+        const postActions = document.querySelector('[data-post-actions]');
 
         if (translateBox) {
           const postSlug = translateBox.dataset.postSlug || '';
@@ -465,7 +536,7 @@ const postSeoDescription = buildPostSeoDescription(post);
               return data;
             } catch (error) {
               if (error instanceof Error && error.name === 'AbortError') {
-                throw new Error('Translation timed out. Please try again.');
+                throw new Error('Translation timed out. Please try again.', { cause: error });
               }
               throw error;
             } finally {
@@ -535,11 +606,11 @@ const postSeoDescription = buildPostSeoDescription(post);
           }
         }
 
-        if (shareBox) {
-          const shareTitle = shareBox.dataset.shareTitle || document.title;
-          const shareUrl = shareBox.dataset.shareUrl || window.location.href;
-          const nativeShare = shareBox.querySelector('[data-native-share]');
-          const status = shareBox.querySelector('[data-share-status]');
+        if (postActions) {
+          const shareTitle = postActions.dataset.postTitle || document.title;
+          const shareUrl = postActions.dataset.postUrl || window.location.href;
+          const nativeShare = postActions.querySelector('[data-post-action]');
+          const status = postActions.querySelector('[data-post-action-status]');
 
           function setShareStatus(message) {
             if (!status) return;

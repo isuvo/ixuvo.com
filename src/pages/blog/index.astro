@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getPublishedPosts } from '../../lib/pocketbase.js';
 
-let posts = [];
+let posts: any[] = [];
 let feedError = '';
 
 try {
@@ -27,8 +27,8 @@ const filterOptions = [
 ---
 
 <BaseLayout
-  title="AI Systems, Cloud & DevSecOps Blog | isuvo"
-  description="Practical writing from isuvo on AI systems, cloud infrastructure, automation, security, and DevSecOps."
+  title="AI SaaS, Agentic Systems & Software Engineering Blog | Shuvo"
+  description="Technical writing by Shuvo on AI SaaS, agentic systems, software architecture, automation, cloud-native platforms, DevSecOps, and software security."
   canonical="/blog"
 >
   <section class="hero">

@@ -1,0 +1,857 @@
+{
+  "createdAt": "2026-07-21T04:04:08.019Z",
+  "baseUrl": "https://ixuvo.com",
+  "protectedPostCount": 84,
+  "protections": {
+    "slugs": "immutable",
+    "canonicalUrls": "immutable",
+    "publicationDates": "immutable",
+    "publishedStatus": "immutable",
+    "indexingStatus": "no noindex without manual approval",
+    "redirects": "forbidden",
+    "sitemapMembership": "required",
+    "directHttpStatus": 200
+  },
+  "posts": [
+    {
+      "recordId": "o6n1e23i4d0k1uf",
+      "slug": "securing-edge-infrastructure-zero-trust-passkeys",
+      "canonicalUrl": "https://ixuvo.com/blog/securing-edge-infrastructure-zero-trust-passkeys",
+      "title": "Securing the Edge: Mitigating Infrastructure Vulnerabilities with Zero Trust and Passkeys",
+      "publicationDate": "2026-07-20 15:56:55.559Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "e8d43s28bzvvjcy",
+      "slug": "moonshot-kimi-k3-open-weights-infrastructure-analysis",
+      "canonicalUrl": "https://ixuvo.com/blog/moonshot-kimi-k3-open-weights-infrastructure-analysis",
+      "title": "Analyzing Moonshot AI's Kimi K3: What a 2.8-Trillion Parameter Open-Weights Model Means for Your Infrastructure",
+      "publicationDate": "2026-07-19 15:56:47.149Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "kfi0kshe6migi64",
+      "slug": "bun-zig-rust-ai-migration-analysis",
+      "canonicalUrl": "https://ixuvo.com/blog/bun-zig-rust-ai-migration-analysis",
+      "title": "Analyzing Bun's Rapid AI-Driven Rewrite from Zig to Rust and the Fallout of the '11-Day Migration'",
+      "publicationDate": "2026-07-18 18:40:26.417Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "l2vl5sv4xgg43qk",
+      "slug": "securing-boundary-zero-day-api-gateways",
+      "canonicalUrl": "https://ixuvo.com/blog/securing-boundary-zero-day-api-gateways",
+      "title": "Securing the Boundary: Mitigating Zero-Day Vulnerabilities in Modern API Gateways",
+      "publicationDate": "2026-07-18 13:01:34.723Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "73kgd2aps59gr40",
+      "slug": "aws-security-hub-native-azure-guardduty-ai-protection",
+      "canonicalUrl": "https://ixuvo.com/blog/aws-security-hub-native-azure-guardduty-ai-protection",
+      "title": "AWS Integrates Native Multi-Cloud Support for Microsoft Azure and Launches GuardDuty AI Protection in Security Hub",
+      "publicationDate": "2026-07-17 18:46:24.059Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "3doqt1wiafu34je",
+      "slug": "vault-kubernetes-kms-v2-beta-analysis",
+      "canonicalUrl": "https://ixuvo.com/blog/vault-kubernetes-kms-v2-beta-analysis",
+      "title": "Architecting Secure etcd Encryption: Analyzing the Vault Kubernetes KMS v2 Beta",
+      "publicationDate": "2026-07-16 13:01:37.598Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "keicovmbpy24znd",
+      "slug": "surviving-622-cve-patch-tuesday-metadata-shift",
+      "canonicalUrl": "https://ixuvo.com/blog/surviving-622-cve-patch-tuesday-metadata-shift",
+      "title": "Surviving the 622-CVE Patch Tuesday: How to Handle High-Volume Rollups and Microsoft's Metadata Shift",
+      "publicationDate": "2026-07-15 13:01:42.854Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "457jsbf60phk2pt",
+      "slug": "securing-ai-orchestrators-langflow-idor-cve-2026-55255",
+      "canonicalUrl": "https://ixuvo.com/blog/securing-ai-orchestrators-langflow-idor-cve-2026-55255",
+      "title": "Securing AI Orchestrators: Mitigating the Langflow IDOR Vulnerability (CVE-2026-55255)",
+      "publicationDate": "2026-07-14 17:01:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "zuw6o4dshppefoz",
+      "slug": "openai-gpt-5-6-sol-terra-luna-migration-guide",
+      "canonicalUrl": "https://ixuvo.com/blog/openai-gpt-5-6-sol-terra-luna-migration-guide",
+      "title": "Architectural Deep Dive: Migrating to OpenAI's GPT-5.6 Sol, Terra, and Luna",
+      "publicationDate": "2026-07-13 21:01:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "j2jnueolgm80466",
+      "slug": "retiring-kerberos-rc4-cve-2026-20833",
+      "canonicalUrl": "https://ixuvo.com/blog/retiring-kerberos-rc4-cve-2026-20833",
+      "title": "Retiring Kerberos RC4: Mitigating Kerberoasting and Preparing for the July 2026 Enforcement",
+      "publicationDate": "2026-07-13 19:49:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "fe22upy7xt654zp",
+      "slug": "daily-tech-ops-mitigating-edge-vulnerabilities-api-gateways",
+      "canonicalUrl": "https://ixuvo.com/blog/daily-tech-ops-mitigating-edge-vulnerabilities-api-gateways",
+      "title": "Daily Technology Operations Briefing: Mitigating Edge Vulnerabilities and Hardening API Gateways",
+      "publicationDate": "2026-07-13 08:11:02.478Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "viwaedbpgqomrp6",
+      "slug": "mesh-llm-p2p-distributed-inference-iroh",
+      "canonicalUrl": "https://ixuvo.com/blog/mesh-llm-p2p-distributed-inference-iroh",
+      "title": "Mesh LLM Launches P2P Distributed Inference Over the iroh Networking Layer",
+      "publicationDate": "2026-07-13 06:50:26.464Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "1iuoij8knmlmncu",
+      "slug": "whitefiber-cross-data-center-gpu-supercluster-architecture",
+      "canonicalUrl": "https://ixuvo.com/blog/whitefiber-cross-data-center-gpu-supercluster-architecture",
+      "title": "Scaling Beyond Single-Site Limits: Inside WhiteFiber's 111.2 Tbps Cross-Data-Center AI Architecture",
+      "publicationDate": "2026-07-13 05:41:51.007Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "bgad20nokqpgrse",
+      "slug": "rogue-agent-vulnerability-ai-agent-security-risks",
+      "canonicalUrl": "https://ixuvo.com/blog/rogue-agent-vulnerability-ai-agent-security-risks",
+      "title": "New Vulnerability 'Rogue Agent' Highlights AI Agent Security Risks in Cloud Platforms",
+      "publicationDate": "2026-07-12 21:02:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "pzjwco5t8wnf2hj",
+      "slug": "evolving-role-of-rag-in-agentic-ai-systems",
+      "canonicalUrl": "https://ixuvo.com/blog/evolving-role-of-rag-in-agentic-ai-systems",
+      "title": "The Evolving Role of RAG in Agentic AI Systems",
+      "publicationDate": "2026-07-12 19:31:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "tx1ugad6dcpe2vz",
+      "slug": "api-security-agentic-era-autonomous-ai-workflows",
+      "canonicalUrl": "https://ixuvo.com/blog/api-security-agentic-era-autonomous-ai-workflows",
+      "title": "API Security for the Agentic Era: Protecting Autonomous AI Workflows",
+      "publicationDate": "2026-07-12 18:21:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "q7wskog09yswmu8",
+      "slug": "prompt-to-production-ai-coding-agents-devops",
+      "canonicalUrl": "https://ixuvo.com/blog/prompt-to-production-ai-coding-agents-devops",
+      "title": "New Tooling Streamlines Prompt-to-Production Development for AI Coding Agents",
+      "publicationDate": "2026-07-12 11:56:10.279Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "jx5kglzjfcpnm2z",
+      "slug": "aws-launches-self-hosted-claude-apps-gateway-ai-governance",
+      "canonicalUrl": "https://ixuvo.com/blog/aws-launches-self-hosted-claude-apps-gateway-ai-governance",
+      "title": "AWS Launches Self-Hosted Claude Apps Gateway to Centralize Governance of AI Coding Agents",
+      "publicationDate": "2026-07-12 09:24:37.532Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "is8lzani8s422hk",
+      "slug": "quantum-computing-safe-security-2029",
+      "canonicalUrl": "https://ixuvo.com/blog/quantum-computing-safe-security-2029",
+      "title": "Quantum Computing & Quantum-Safe Security: The Race to 2029",
+      "publicationDate": "2026-07-11 21:19:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "1qgwntxq5975qal",
+      "slug": "zero-trust-devsecops-securing-modern-software-delivery-pipeline",
+      "canonicalUrl": "https://ixuvo.com/blog/zero-trust-devsecops-securing-modern-software-delivery-pipeline",
+      "title": "Zero Trust in DevSecOps: Securing the Modern Software Delivery Pipeline",
+      "publicationDate": "2026-07-10 12:15:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "igry42w4sne1b8w",
+      "slug": "95-ai-agent-pilots-zero-roi-production",
+      "canonicalUrl": "https://ixuvo.com/blog/95-ai-agent-pilots-zero-roi-production",
+      "title": "95% of AI Agent Pilots Deliver Zero ROI. Here's What Actually Works in Production.",
+      "publicationDate": "2026-07-07 09:33:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "l30sp3katif51z4",
+      "slug": "ai-bubble-future-of-work",
+      "canonicalUrl": "https://ixuvo.com/blog/ai-bubble-future-of-work",
+      "title": "The AI Bubble and the Future of Work: What Professionals Should Prepare For",
+      "publicationDate": "2026-07-06 09:17:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "xuqmv2y0pots476",
+      "slug": "unleash-your-web-potential-with-custom-ai-commands-by-harpa-ai",
+      "canonicalUrl": "https://ixuvo.com/blog/unleash-your-web-potential-with-custom-ai-commands-by-harpa-ai",
+      "title": "Unleash Your Web Potential with Custom AI Commands by HARPA.AI",
+      "publicationDate": "2023-08-12 20:31:58.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "s06ka5ihj34xnbi",
+      "slug": "mental-wellness-for-devs",
+      "canonicalUrl": "https://ixuvo.com/blog/mental-wellness-for-devs",
+      "title": "Mental wellness for devs - is relevant?",
+      "publicationDate": "2023-08-06 01:27:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "l7bkjghve14vok7",
+      "slug": "to-create-a-mapping-in-c",
+      "canonicalUrl": "https://ixuvo.com/blog/to-create-a-mapping-in-c",
+      "title": "To create a mapping in C#",
+      "publicationDate": "2023-04-28 15:18:47.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "a13gf0w69p7ip67",
+      "slug": "how-to-install-hyperledger-fabric",
+      "canonicalUrl": "https://ixuvo.com/blog/how-to-install-hyperledger-fabric",
+      "title": "How to install hyperledger fabric",
+      "publicationDate": "2023-04-22 21:14:40.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "7tcvkybwcwh29do",
+      "slug": "skills-you-can-have-if-you-wanted-to-be-considered-for-microsoft",
+      "canonicalUrl": "https://ixuvo.com/blog/skills-you-can-have-if-you-wanted-to-be-considered-for-microsoft",
+      "title": "Skills you can have if you are a Microsoft aspirant",
+      "publicationDate": "2023-04-22 16:52:42.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "q5atuqpkoqtisin",
+      "slug": "no-gui-available-only-tty-in-ubuntu",
+      "canonicalUrl": "https://ixuvo.com/blog/no-gui-available-only-tty-in-ubuntu",
+      "title": "No gui available; only tty in Ubuntu",
+      "publicationDate": "2022-11-14 17:57:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "x027s6v38asnndx",
+      "slug": "renaming-mssql-fk-info",
+      "canonicalUrl": "https://ixuvo.com/blog/renaming-mssql-fk-info",
+      "title": "Renaming mssql FK info",
+      "publicationDate": "2020-10-08 07:28:37.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "wwm8n1w0bq39s7w",
+      "slug": "foreign-keys-in-a-database",
+      "canonicalUrl": "https://ixuvo.com/blog/foreign-keys-in-a-database",
+      "title": "Foreign keys in a database",
+      "publicationDate": "2020-10-08 06:49:36.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "ou50ah16bqiweo8",
+      "slug": "little-tips-to-change-desktop-back",
+      "canonicalUrl": "https://ixuvo.com/blog/little-tips-to-change-desktop-back",
+      "title": "Little tip to change desktop back",
+      "publicationDate": "2019-10-23 09:38:24.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "xx2m5poh3nqbc4h",
+      "slug": "linkedin",
+      "canonicalUrl": "https://ixuvo.com/blog/linkedin",
+      "title": "Test post with pic",
+      "publicationDate": "2018-10-16 17:21:10.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "fad6fcpdpt20b7p",
+      "slug": "excel-column-to-comma-separated-value",
+      "canonicalUrl": "https://ixuvo.com/blog/excel-column-to-comma-separated-value",
+      "title": "Excel column to comma separated value",
+      "publicationDate": "2018-05-02 09:06:17.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "0inskct9dfg3l1k",
+      "slug": "d3-js-api-wordcloud",
+      "canonicalUrl": "https://ixuvo.com/blog/d3-js-api-wordcloud",
+      "title": "D3.js API/wordcloud",
+      "publicationDate": "2017-11-19 06:43:09.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "txp6y7yjicn7aou",
+      "slug": "solving-all-incorrect-dependencies",
+      "canonicalUrl": "https://ixuvo.com/blog/solving-all-incorrect-dependencies",
+      "title": "Solving all Incorrect dependencies",
+      "publicationDate": "2017-11-08 15:34:45.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "oou1vfavhswhv2y",
+      "slug": "madina",
+      "canonicalUrl": "https://ixuvo.com/blog/madina",
+      "title": "#Madina",
+      "publicationDate": "2017-08-18 10:30:53.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "gsjuk3336lfg8fx",
+      "slug": "morning-in-mecca",
+      "canonicalUrl": "https://ixuvo.com/blog/morning-in-mecca",
+      "title": "Morning in #Mecca",
+      "publicationDate": "2017-08-15 03:32:11.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "zu41kusazw20gv6",
+      "slug": "socket",
+      "canonicalUrl": "https://ixuvo.com/blog/socket",
+      "title": "Socket",
+      "publicationDate": "2017-03-28 05:37:35.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "ywbkx0ghw0oqlap",
+      "slug": "temperature",
+      "canonicalUrl": "https://ixuvo.com/blog/temperature",
+      "title": "Temperature !",
+      "publicationDate": "2017-01-17 16:36:03.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "bb4i82f2bv6ir25",
+      "slug": "good-read",
+      "canonicalUrl": "https://ixuvo.com/blog/good-read",
+      "title": "Good read",
+      "publicationDate": "2016-10-07 21:03:25.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "b3bzagjidtt92dr",
+      "slug": "gembox-spreadsheet",
+      "canonicalUrl": "https://ixuvo.com/blog/gembox-spreadsheet",
+      "title": "Gembox spreadsheet",
+      "publicationDate": "2016-09-25 05:49:35.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "gvs2qr8bcaxbbfr",
+      "slug": "delete-duplicate-records-by-pinal-dev",
+      "canonicalUrl": "https://ixuvo.com/blog/delete-duplicate-records-by-pinal-dev",
+      "title": "Delete duplicate records by pinal dev",
+      "publicationDate": "2016-09-21 19:41:02.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "ob2p3otlon3e0ay",
+      "slug": "lets-see",
+      "canonicalUrl": "https://ixuvo.com/blog/lets-see",
+      "title": "Let's see",
+      "publicationDate": "2016-09-15 22:05:40.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "txlnaxtlzko2nrj",
+      "slug": "migrating-from-asp-net-mvc-to-asp-net-core-mvc",
+      "canonicalUrl": "https://ixuvo.com/blog/migrating-from-asp-net-mvc-to-asp-net-core-mvc",
+      "title": "Migrating From ASP.NET MVC to ASP.NET Core MVC",
+      "publicationDate": "2016-09-01 08:52:39.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "8f5f28ecwdrq75m",
+      "slug": "change-table-log",
+      "canonicalUrl": "https://ixuvo.com/blog/change-table-log",
+      "title": "Change Table log",
+      "publicationDate": "2016-07-11 09:53:10.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "l2y9ucm7dbyk5g7",
+      "slug": "how-a-standard-support-process-could-be",
+      "canonicalUrl": "https://ixuvo.com/blog/how-a-standard-support-process-could-be",
+      "title": "How a standard support process could be",
+      "publicationDate": "2015-03-15 04:21:01.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "ndlkv5l6fz9uns6",
+      "slug": "how-to-remove-vs-from-your-machine",
+      "canonicalUrl": "https://ixuvo.com/blog/how-to-remove-vs-from-your-machine",
+      "title": "How to remove VS from your machine",
+      "publicationDate": "2014-12-08 08:40:43.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "q3lb2ofq1grlezm",
+      "slug": "back-up-script-sql-job",
+      "canonicalUrl": "https://ixuvo.com/blog/back-up-script-sql-job",
+      "title": "DB Back up script - SQL Job",
+      "publicationDate": "2014-07-20 06:52:24.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "3n8oka21vtk97xc",
+      "slug": "find-all-subordinates-sql",
+      "canonicalUrl": "https://ixuvo.com/blog/find-all-subordinates-sql",
+      "title": "Find all Subordinates - SQL :)",
+      "publicationDate": "2014-05-08 05:15:59.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "vqueoq4yvx253p0",
+      "slug": "using-regular-expression",
+      "canonicalUrl": "https://ixuvo.com/blog/using-regular-expression",
+      "title": "Using Regular Expression (!)",
+      "publicationDate": "2014-02-12 04:57:10.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "d1k89yl6yknxw4a",
+      "slug": "beginning-web-service",
+      "canonicalUrl": "https://ixuvo.com/blog/beginning-web-service",
+      "title": "Beginning web service",
+      "publicationDate": "2014-01-07 06:20:09.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "75g80tyycc3p4m0",
+      "slug": "visual-studio-2010-shortcuts",
+      "canonicalUrl": "https://ixuvo.com/blog/visual-studio-2010-shortcuts",
+      "title": "Visual Studio 2010 ShortCuts",
+      "publicationDate": "2013-04-15 06:13:46.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "f9cry9c7h2u4dzk",
+      "slug": "avoid-installing-vs-2008-sp1-while-installing-mssql-server-2008-r2",
+      "canonicalUrl": "https://ixuvo.com/blog/avoid-installing-vs-2008-sp1-while-installing-mssql-server-2008-r2",
+      "title": "Avoid installing VS 2008 SP1 while installing MSSQL Server 2008 R2",
+      "publicationDate": "2013-04-09 06:21:24.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "clun5g9gi42laov",
+      "slug": "well-this-could-be-the-beginning",
+      "canonicalUrl": "https://ixuvo.com/blog/well-this-could-be-the-beginning",
+      "title": "Well this could be the beginning",
+      "publicationDate": "2013-03-05 07:55:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "cjl0nqllltyophn",
+      "slug": "iis-issue-convert-32-bit-app-in-64-bit",
+      "canonicalUrl": "https://ixuvo.com/blog/iis-issue-convert-32-bit-app-in-64-bit",
+      "title": "IIS issue-convert 32 bit app in 64 bit",
+      "publicationDate": "2013-01-01 05:56:09.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "nwakoxunf5q5x32",
+      "slug": "crystal-report-in-asp-net-legacy",
+      "canonicalUrl": "https://ixuvo.com/blog/crystal-report-in-asp-net-legacy",
+      "title": "Crystal Report in ASP.NET",
+      "publicationDate": "2012-12-18 10:00:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "oo73lz5xrlbv2by",
+      "slug": "print-gridview-form-page",
+      "canonicalUrl": "https://ixuvo.com/blog/print-gridview-form-page",
+      "title": "Print Gridview form Page",
+      "publicationDate": "2012-10-22 11:42:13.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "juny9rrjvjy6b3e",
+      "slug": "step-by-step-integration-service-creating-package",
+      "canonicalUrl": "https://ixuvo.com/blog/step-by-step-integration-service-creating-package",
+      "title": "Step by step Integration Service - Creating Package",
+      "publicationDate": "2012-10-10 07:57:20.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "nppf7ceg049zr59",
+      "slug": "load-data-into-datagridview-from-storeprocedure",
+      "canonicalUrl": "https://ixuvo.com/blog/load-data-into-datagridview-from-storeprocedure",
+      "title": "Load data into DataGridView from Storeprocedure",
+      "publicationDate": "2012-10-08 07:22:44.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "ulzbhrc1awqlrxm",
+      "slug": "send-email-windows-service-2",
+      "canonicalUrl": "https://ixuvo.com/blog/send-email-windows-service-2",
+      "title": "Send Email Windows Service",
+      "publicationDate": "2012-10-04 18:04:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "63we7at5lo3pfcr",
+      "slug": "export-gridview-data-to-excel",
+      "canonicalUrl": "https://ixuvo.com/blog/export-gridview-data-to-excel",
+      "title": "Export Gridview data to Excel",
+      "publicationDate": "2012-07-25 09:53:06.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "ho17jbu1ruvv80e",
+      "slug": "what-makes-you-a-good-asp-net-developer",
+      "canonicalUrl": "https://ixuvo.com/blog/what-makes-you-a-good-asp-net-developer",
+      "title": "What makes you a good asp.net developer !",
+      "publicationDate": "2012-05-20 09:09:10.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "i58l0d3grawjnti",
+      "slug": "all-joins-sql",
+      "canonicalUrl": "https://ixuvo.com/blog/all-joins-sql",
+      "title": "All Joins [SQL]",
+      "publicationDate": "2012-05-18 14:36:16.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "3rbbrz1ci01jbia",
+      "slug": "scrollable-gridview-the-simplest-way",
+      "canonicalUrl": "https://ixuvo.com/blog/scrollable-gridview-the-simplest-way",
+      "title": "Scrollable Gridview-The simplest way :)",
+      "publicationDate": "2012-05-17 05:52:15.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "xlv7by9z6yyltgq",
+      "slug": "oracle-dba-interview-questions",
+      "canonicalUrl": "https://ixuvo.com/blog/oracle-dba-interview-questions",
+      "title": "Oracle DBA Interview Questions",
+      "publicationDate": "2012-05-15 09:22:54.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "fqjsxu9x050hfmo",
+      "slug": "sql-dba-interview-questions",
+      "canonicalUrl": "https://ixuvo.com/blog/sql-dba-interview-questions",
+      "title": "SQL DBA Interview Questions",
+      "publicationDate": "2012-05-15 08:26:26.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "znbz77o6wijx64f",
+      "slug": "oracle-interview-questions",
+      "canonicalUrl": "https://ixuvo.com/blog/oracle-interview-questions",
+      "title": "Oracle Interview Questions",
+      "publicationDate": "2012-05-15 07:44:57.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "7zqyfc2yyt1d552",
+      "slug": "c-sharp-interview-questions",
+      "canonicalUrl": "https://ixuvo.com/blog/c-sharp-interview-questions",
+      "title": "C Sharp Interview Questions",
+      "publicationDate": "2012-05-15 05:47:12.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "dx3cd7ka94iiq27",
+      "slug": "asp-net-interview-questions-collected-and-self",
+      "canonicalUrl": "https://ixuvo.com/blog/asp-net-interview-questions-collected-and-self",
+      "title": "ASP.NET Interview Questions [Collected and Self]",
+      "publicationDate": "2012-05-15 05:38:33.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "rpa3n3rzl65bymr",
+      "slug": "sql-interview-questions-collected-and-self",
+      "canonicalUrl": "https://ixuvo.com/blog/sql-interview-questions-collected-and-self",
+      "title": "SQL Interview Questions [Collected and Self]",
+      "publicationDate": "2012-05-15 04:55:10.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "djxn40sdpqcz97t",
+      "slug": "essentials-of-financial-management-14e",
+      "canonicalUrl": "https://ixuvo.com/blog/essentials-of-financial-management-14e",
+      "title": "Essentials of Financial Management 14e",
+      "publicationDate": "2012-05-06 14:32:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "kczk2t94u87pwwl",
+      "slug": "simple-method-to-timeoutsession-end",
+      "canonicalUrl": "https://ixuvo.com/blog/simple-method-to-timeoutsession-end",
+      "title": "Simple method to timeout/session_End",
+      "publicationDate": "2012-05-05 05:45:27.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "cfzxgyxsjkya7su",
+      "slug": "interesting-issue-with-web-config-file",
+      "canonicalUrl": "https://ixuvo.com/blog/interesting-issue-with-web-config-file",
+      "title": "Interesting Issue With web.config file",
+      "publicationDate": "2012-05-02 11:02:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "5rtn2qh8ysje6oa",
+      "slug": "fixed-header-scroll-able-gridview-using-js",
+      "canonicalUrl": "https://ixuvo.com/blog/fixed-header-scroll-able-gridview-using-js",
+      "title": "Fixed header scroll-able Gridview using JS",
+      "publicationDate": "2012-05-01 05:58:51.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "sh09bnkjwxwxbrm",
+      "slug": "repair-net-framework-4-0-for-32-and-64-bit-2",
+      "canonicalUrl": "https://ixuvo.com/blog/repair-net-framework-4-0-for-32-and-64-bit-2",
+      "title": "Repair .NET Framework 4.0 for 32 and 64 bit",
+      "publicationDate": "2012-04-30 10:31:36.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "xr8l7ambnl3qc15",
+      "slug": "host-asp-net-4-0-application-in-iis-7-5win-server-2008-r2",
+      "canonicalUrl": "https://ixuvo.com/blog/host-asp-net-4-0-application-in-iis-7-5win-server-2008-r2",
+      "title": "Host ASP.NET 4.0 Application in IIS 7.5[win server 2008 R2]",
+      "publicationDate": "2012-04-30 10:09:22.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "7dcoc2b3g5ddytp",
+      "slug": "cassini-web-server-web-dev-coltd",
+      "canonicalUrl": "https://ixuvo.com/blog/cassini-web-server-web-dev-coltd",
+      "title": "Cassini Web Server [web Dev. Coltd.]",
+      "publicationDate": "2012-04-30 07:45:37.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "fmg5tck57c90xtq",
+      "slug": "encrypt-decrypt",
+      "canonicalUrl": "https://ixuvo.com/blog/encrypt-decrypt",
+      "title": "Encrypt Decrypt",
+      "publicationDate": "2012-04-29 11:38:00.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "zqsy4hi1n40otj1",
+      "slug": "vals-servey-sample-the-standard-way",
+      "canonicalUrl": "https://ixuvo.com/blog/vals-servey-sample-the-standard-way",
+      "title": "VALS Sarvey Sample in Respect of Bangladesh [The Standard way..]",
+      "publicationDate": "2012-04-29 11:31:03.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "i0taldquc1id06h",
+      "slug": "js-code-to-confirmation",
+      "canonicalUrl": "https://ixuvo.com/blog/js-code-to-confirmation",
+      "title": "JS Code for confirmation",
+      "publicationDate": "2012-04-29 11:25:39.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "tbgfjd8n8jc0ffd",
+      "slug": "auto-generate-transid-function-com-personal",
+      "canonicalUrl": "https://ixuvo.com/blog/auto-generate-transid-function-com-personal",
+      "title": "Auto Generate Transid function [Com. personal]",
+      "publicationDate": "2012-04-29 11:16:31.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "hb0kdp0h3l4ih50",
+      "slug": "add-code-to-the-wordpress-blog-collected",
+      "canonicalUrl": "https://ixuvo.com/blog/add-code-to-the-wordpress-blog-collected",
+      "title": "Add code to the wordpress blog [Collected]",
+      "publicationDate": "2012-04-29 11:06:59.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "g084zmuu3bbp0tf",
+      "slug": "218",
+      "canonicalUrl": "https://ixuvo.com/blog/218",
+      "title": "Beginning AJAX",
+      "publicationDate": "2012-04-29 11:03:37.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    },
+    {
+      "recordId": "1qiutuv4wio9hgz",
+      "slug": "modifyregistry-class",
+      "canonicalUrl": "https://ixuvo.com/blog/modifyregistry-class",
+      "title": "ModifyRegistry Class",
+      "publicationDate": "2012-04-29 06:56:14.000Z",
+      "indexingStatus": "index",
+      "httpStatus": 200,
+      "sitemapIncluded": true
+    }
+  ]
+}

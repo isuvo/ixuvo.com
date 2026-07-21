@@ -13,6 +13,7 @@ const {
   publishedTime,
   modifiedTime,
   tags = [],
+  jsonLd = null,
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
@@ -23,20 +24,39 @@ const privatePath = currentPath === '/write'
   || currentPath.startsWith('/admin/');
 const shouldNoindex = noindex || privatePath || Astro.response.status === 404;
 
-function navProps(path) {
+function navProps(path: string) {
   const active = path === '/' ? currentPath === '/' : currentPath.startsWith(path);
   return {
     class: active ? 'is-active' : undefined,
-    'aria-current': active ? 'page' : undefined,
+    'aria-current': active ? 'page' as const : undefined,
   };
 }
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en-CA">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-KGG1QMLFS6"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){
+        // eslint-disable-next-line prefer-rest-params -- Google's loader queues variadic commands through arguments.
+        window.dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-KGG1QMLFS6');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script type="text/javascript" is:inline>
+      (function(c,l,a,r,i,t,y){
+          // eslint-disable-next-line prefer-rest-params -- Microsoft Clarity's loader queues calls before its script loads.
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "xpoeqlbb5i");
+    </script>
     <SEO
       title={title}
       description={description}
@@ -48,6 +68,7 @@ function navProps(path) {
       publishedTime={publishedTime}
       modifiedTime={modifiedTime}
       tags={tags}
+      jsonLd={jsonLd}
     />
     <slot name="head" />
     <link rel="icon" type="image/png" href="/logo.png" />
@@ -82,6 +103,12 @@ function navProps(path) {
         --heat-2: #3f7fb5;
         --heat-3: #ff8a34;
         --heat-4: #ffe082;
+        --weight-regular: 400;
+        --weight-medium: 500;
+        --weight-semibold: 600;
+        --weight-bold: 700;
+        --font-sans: "Inter", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-display: "IBM Plex Mono", "Courier New", monospace;
       }
 
       :root[data-theme="light"] {
@@ -113,7 +140,8 @@ function navProps(path) {
       }
 
       html {
-        font-family: "Inter", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-family: var(--font-sans);
+        font-weight: var(--weight-regular);
         color: var(--ink);
         background: var(--bg);
         scroll-behavior: smooth;
@@ -204,12 +232,14 @@ function navProps(path) {
 
       .brand-copy strong {
         font-size: 1rem;
+        font-weight: var(--weight-bold);
         letter-spacing: 0.08em;
       }
 
       .brand-copy span {
         color: var(--muted);
         font-size: 0.84rem;
+        font-weight: var(--weight-regular);
       }
 
       .nav {
@@ -217,6 +247,7 @@ function navProps(path) {
         gap: 1rem;
         flex-wrap: wrap;
         align-items: center;
+        margin-left: auto;
       }
 
       .nav-toggle {
@@ -234,6 +265,7 @@ function navProps(path) {
         text-decoration: none;
         color: var(--muted);
         font-size: 0.95rem;
+        font-weight: var(--weight-medium);
         display: inline-flex;
         align-items: center;
         gap: 0.45rem;
@@ -268,6 +300,11 @@ function navProps(path) {
         display: inline-flex;
         align-items: center;
         gap: 0.45rem;
+        font-weight: var(--weight-medium);
+      }
+
+      .theme-label-compact {
+        display: none;
       }
 
       .theme-toggle::before {
@@ -300,15 +337,117 @@ function navProps(path) {
       }
 
       h1, h2, h3 {
-        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-family: var(--font-display);
         line-height: 1.12;
         margin: 0;
-        font-weight: 700;
+        font-weight: var(--weight-bold);
       }
 
       h1 {
         font-size: clamp(2.1rem, 5vw, 3.5rem);
         letter-spacing: 0.04em;
+      }
+
+      .hero-statement {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0 0.32em;
+        padding-bottom: 0.3rem;
+      }
+
+      .hero-statement::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -0.65rem;
+        width: clamp(10rem, 32vw, 22rem);
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--line), var(--accent), var(--line), transparent);
+        opacity: 0;
+        transform: translateX(-50%) scaleX(0);
+        animation: hero-structure-trace 900ms 250ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      .hero-statement::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -0.1rem;
+        width: clamp(4rem, 12vw, 8rem);
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+        border-radius: 999px;
+        opacity: 0;
+        transform: translateX(-50%) scaleX(0);
+        box-shadow: 0 0 1rem color-mix(in srgb, var(--accent) 32%, transparent);
+        animation: hero-accent-sweep 760ms 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      .hero-phrase {
+        display: inline-block;
+        opacity: 0;
+        clip-path: inset(0 0 100% 0);
+        transform: translateY(0.45em);
+        animation: hero-phrase-reveal 760ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      .hero-architecting {
+        animation-delay: 60ms;
+      }
+
+      .hero-agentic {
+        color: var(--accent-soft);
+        animation-delay: 180ms;
+      }
+
+      .hero-support,
+      .hero-lead,
+      .hero-actions-intro {
+        opacity: 0;
+        transform: translateY(0.55rem);
+        animation: hero-copy-in 620ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      .hero-support { animation-delay: 500ms; }
+      .hero-lead { animation-delay: 640ms; }
+      .hero-actions-intro { animation-delay: 780ms; }
+
+      @keyframes hero-phrase-reveal {
+        from {
+          opacity: 0;
+          clip-path: inset(0 0 100% 0);
+          transform: translateY(0.45em);
+        }
+        to {
+          opacity: 1;
+          clip-path: inset(0);
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes hero-copy-in {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes hero-structure-trace {
+        40% { opacity: 0.7; }
+        to {
+          opacity: 0.7;
+          transform: translateX(-50%) scaleX(1);
+        }
+      }
+
+      @keyframes hero-accent-sweep {
+        45% { opacity: 1; }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) scaleX(1);
+        }
       }
 
       h2 {
@@ -318,16 +457,17 @@ function navProps(path) {
       p {
         line-height: 1.65;
         color: var(--muted);
+        font-weight: var(--weight-regular);
         margin: 0;
       }
 
       .eyebrow,
       .meta {
-        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-family: var(--font-display);
         color: var(--accent-soft);
         letter-spacing: 0.06em;
         font-size: 0.78rem;
-        font-weight: 700;
+        font-weight: var(--weight-semibold);
         text-transform: uppercase;
       }
 
@@ -413,6 +553,7 @@ function navProps(path) {
       .pill {
         color: var(--ink);
         font-size: 0.88rem;
+        font-weight: var(--weight-medium);
         white-space: nowrap;
       }
 
@@ -437,8 +578,8 @@ function navProps(path) {
         background:
           linear-gradient(135deg, rgba(255, 138, 52, 0.16), rgba(255, 138, 52, 0.04)),
           var(--button-surface);
-        font-family: "IBM Plex Mono", "Courier New", monospace;
-        font-weight: 700;
+        font-family: var(--font-display);
+        font-weight: var(--weight-semibold);
         box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
         backdrop-filter: blur(8px);
         transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
@@ -490,13 +631,32 @@ function navProps(path) {
       }
 
       .identity-lines {
-        margin-top: 0.75rem;
+        display: grid;
+        gap: 0.35rem;
+        margin-top: 0.9rem;
       }
 
-      .identity-lines div {
-        font-size: clamp(1rem, 2vw, 1.3rem);
+      .identity-primary {
+        font-size: clamp(1.02rem, 2vw, 1.22rem);
         color: var(--ink);
-        font-weight: 700;
+        font-weight: var(--weight-semibold);
+      }
+
+      .identity-name {
+        color: var(--accent-soft);
+        font-weight: var(--weight-bold);
+      }
+
+      .identity-focus {
+        color: var(--muted);
+        font-size: clamp(0.95rem, 1.7vw, 1.08rem);
+        font-weight: var(--weight-medium);
+        letter-spacing: 0.01em;
+      }
+
+      .identity-focus span {
+        color: var(--accent);
+        margin-inline: 0.18rem;
       }
 
       .section-title a {
@@ -575,6 +735,29 @@ function navProps(path) {
         font-size: 1rem;
       }
 
+      .post-card h3 {
+        font-family: var(--font-sans);
+        font-weight: var(--weight-semibold);
+        line-height: 1.35;
+        letter-spacing: 0;
+      }
+
+      .post-card p {
+        font-family: var(--font-sans);
+        font-weight: var(--weight-regular);
+      }
+
+      .summary-card strong,
+      .post-card h3,
+      .panel h3,
+      .entry-title {
+        font-weight: var(--weight-semibold);
+      }
+
+      .metric-value {
+        font-weight: var(--weight-bold);
+      }
+
       .summary-card p {
         margin-top: 0.35rem;
       }
@@ -633,6 +816,8 @@ function navProps(path) {
       .timeline-period {
         color: var(--accent-soft);
         font-size: 0.8rem;
+        font-family: var(--font-display);
+        font-weight: var(--weight-semibold);
         margin-bottom: 0.55rem;
         letter-spacing: 0.04em;
       }
@@ -669,10 +854,48 @@ function navProps(path) {
         text-decoration: none;
       }
 
+      .home-post-card h3 a {
+        display: inline;
+        color: var(--ink);
+        text-decoration: none;
+        text-decoration-color: transparent;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.2rem;
+        transition: color 160ms ease, text-decoration-color 160ms ease;
+      }
+
+      .home-post-card h3 a::after {
+        content: " \2192";
+        display: inline-block;
+        color: var(--accent);
+        font-weight: var(--weight-semibold);
+        text-decoration: none;
+        opacity: 0;
+        transform: translateX(-0.12rem);
+        transition: opacity 160ms ease, transform 160ms ease;
+      }
+
+      .home-post-card h3 a:hover,
+      .home-post-card h3 a:focus-visible {
+        color: var(--accent-soft);
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        outline: none;
+      }
+
+      .home-post-card h3 a:hover::after,
+      .home-post-card h3 a:focus-visible::after {
+        opacity: 1;
+        transform: translateX(0.22rem);
+      }
+
       .post-card .meta,
       .repo-card .meta {
         color: var(--muted);
         margin-bottom: 0.25rem;
+        font-family: var(--font-sans);
+        font-weight: var(--weight-medium);
+        letter-spacing: 0.01em;
       }
 
       .repo-card {
@@ -694,6 +917,13 @@ function navProps(path) {
 
       .repo-card h3 {
         font-size: 1.08rem;
+      }
+
+      .repo-card p {
+        font-family: var(--font-sans);
+        font-size: 0.95rem;
+        font-weight: var(--weight-regular);
+        line-height: 1.65;
       }
 
       .repo-card h3 a {
@@ -730,6 +960,7 @@ function navProps(path) {
         color: var(--ink);
         padding: 0.55rem 0.72rem;
         font-size: 0.86rem;
+        font-weight: var(--weight-medium);
         line-height: 1;
         text-decoration: none;
         background: rgba(255, 255, 255, 0.03);
@@ -798,6 +1029,7 @@ function navProps(path) {
         color: var(--ink);
         margin: 0;
         font-size: 0.95rem;
+        font-weight: var(--weight-semibold);
       }
 
       .contact-card strong::before {
@@ -890,6 +1122,7 @@ function navProps(path) {
         gap: 0.4rem;
         color: var(--muted);
         font-size: 0.92rem;
+        font-weight: var(--weight-semibold);
       }
 
       input,
@@ -1015,7 +1248,7 @@ function navProps(path) {
       }
 
       .post-content code {
-        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-family: var(--font-display);
         font-size: 0.94em;
       }
 
@@ -1091,11 +1324,13 @@ function navProps(path) {
 
         .nav-toggle {
           display: inline-flex;
-          margin-left: auto;
+          order: 3;
         }
 
         .nav {
+          order: 4;
           width: 100%;
+          margin-left: 0;
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 0.45rem;
@@ -1106,14 +1341,27 @@ function navProps(path) {
           display: none;
         }
 
-        .nav a,
-        .nav .theme-toggle {
+        .nav a {
           width: 100%;
           min-height: 2.9rem;
           padding: 0.65rem 0.75rem;
           border: 1px solid var(--line-soft);
           border-radius: 0.45rem;
           background: var(--panel);
+        }
+
+        .topbar > .theme-toggle {
+          order: 2;
+          margin-left: auto;
+          min-height: 2.75rem;
+        }
+
+        .theme-label-full {
+          display: none;
+        }
+
+        .theme-label-compact {
+          display: inline;
         }
 
         .activity-scroll {
@@ -1150,6 +1398,26 @@ function navProps(path) {
           width: 100%;
           justify-content: center;
         }
+
+        .hero-statement {
+          gap: 0.08em 0.28em;
+        }
+
+        .hero-phrase {
+          max-width: 100%;
+        }
+
+        .contact-card .contact-item {
+          flex: 1 1 100%;
+          flex-wrap: nowrap;
+        }
+
+        .contact-card .contact-item:first-child p,
+        .contact-card .contact-item:first-child a {
+          white-space: nowrap;
+          overflow-wrap: normal;
+          word-break: normal;
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -1174,16 +1442,19 @@ function navProps(path) {
             <span>{profile.subtitle}</span>
           </span>
         </a>
-        <button type="button" id="nav-toggle" class="nav-toggle" aria-expanded="false" aria-controls="primary-nav">
-          <span aria-hidden="true">&#9776;</span> Menu
-        </button>
         <nav class="nav" id="primary-nav" aria-label="Primary">
           <a href="/" {...navProps('/')}>Home</a>
           <a href="/blog" {...navProps('/blog')}>Blog</a>
           <a href="/write" {...navProps('/write')}>Write</a>
           <a href={profile.links.resume} target="_blank" rel="noreferrer">Resume</a>
-          <button type="button" id="theme-toggle" class="theme-toggle">Theme</button>
         </nav>
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Change color theme">
+          <span class="theme-label-full">Theme</span>
+          <span class="theme-label-compact" aria-hidden="true">Theme</span>
+        </button>
+        <button type="button" id="nav-toggle" class="nav-toggle" aria-expanded="false" aria-controls="primary-nav">
+          <span aria-hidden="true">&#9776;</span> Menu
+        </button>
       </header>
       <slot />
       <footer>
@@ -1195,6 +1466,8 @@ function navProps(path) {
       const storageKey = 'isuvo_theme';
       const root = document.documentElement;
       const toggle = document.getElementById('theme-toggle');
+      const fullThemeLabel = toggle?.querySelector('.theme-label-full');
+      const compactThemeLabel = toggle?.querySelector('.theme-label-compact');
       const navToggle = document.getElementById('nav-toggle');
       const nav = document.getElementById('primary-nav');
       const backToTop = document.getElementById('back-to-top');
@@ -1202,7 +1475,10 @@ function navProps(path) {
       function applyTheme(theme) {
         root.setAttribute('data-theme', theme);
         if (toggle) {
-          toggle.textContent = theme === 'light' ? 'Dark Mode' : 'Light Mode';
+          const nextTheme = theme === 'light' ? 'Dark' : 'Light';
+          if (fullThemeLabel) fullThemeLabel.textContent = `${nextTheme} Mode`;
+          if (compactThemeLabel) compactThemeLabel.textContent = nextTheme;
+          toggle.setAttribute('aria-label', `Switch to ${nextTheme.toLowerCase()} mode`);
           toggle.dataset.theme = theme;
           toggle.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
         }

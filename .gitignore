@@ -4,6 +4,10 @@ node_modules/
 # build output
 dist/
 
+# generated audits (the URL protection baseline is source-controlled)
+reports/*
+!reports/blog-url-baseline.json
+
 # astro
 .astro/
 

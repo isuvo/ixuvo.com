@@ -5,7 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev --host 0.0.0.0 --port 3000",
+    "prebuild": "npm run url:protect",
     "build": "astro build",
+    "typecheck": "astro check",
+    "lint": "eslint src scripts astro.config.mjs eslint.config.js",
+    "test": "npm run lint && npm run typecheck -- --minimumFailingSeverity error && npm run seo:audit && npm run url:protect",
+    "url:baseline:create": "node ./scripts/blog-url-protection.mjs --create-baseline --base-url=https://ixuvo.com",
+    "url:protect": "node ./scripts/blog-url-protection.mjs --base-url=https://ixuvo.com",
+    "seo:audit": "node ./scripts/seo-audit.mjs",
+    "seo:validate:live": "node ./scripts/seo-audit.mjs --base-url=https://ixuvo.com",
+    "sources:repair": "node ./scripts/repair-source-links.mjs",
+    "legacy:plan": "node ./scripts/legacy-improvement-plan.mjs",
     "preview": "astro preview --host 0.0.0.0 --port 3000",
     "start": "node ./dist/server/entry.mjs"
   },
@@ -17,5 +27,14 @@
     "marked": "^18.0.5",
     "pdf-parse": "^2.4.5",
     "sanitize-html": "^2.17.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "eslint-plugin-astro": "^1.7.0",
+    "globals": "^17.7.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.64.0"
   }
 }

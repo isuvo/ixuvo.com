@@ -177,7 +177,7 @@ export async function getPublishedPostsForSitemap() {
   const pageSize = 200;
   const records = [];
   let page = 1;
-  let totalPages = 1;
+  let totalPages;
 
   do {
     const url = collectionUrl('posts', {

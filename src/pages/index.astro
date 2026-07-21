@@ -1,26 +1,75 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import TechEvolution from '../components/TechEvolution.astro';
 import { profile } from '../lib/profile.js';
 import { getGitHubActivity, getGitHubRepos } from '../lib/github.js';
 import { getRecentPostsForHome } from '../lib/pocketbase.js';
 
-let posts = [];
-let repos = [];
-let activity = { total: '0', cells: [], monthLabels: [] };
+let posts: any[] = [];
+let repos: any[] = [];
+let activity: { total: string; cells: any[]; monthLabels: any[] } = { total: '0', cells: [], monthLabels: [] };
 let blogError = '';
 let githubError = '';
 const profileSchema = {
   '@context': 'https://schema.org',
-  '@type': 'ProfilePage',
-  url: 'https://ixuvo.com/',
-  mainEntity: {
-    '@type': 'Person',
-    name: profile.name,
-    url: 'https://ixuvo.com/',
-    image: 'https://ixuvo.com/logo.png',
-    jobTitle: profile.title,
-    sameAs: [profile.links.github, profile.links.linkedin, profile.links.x],
-  },
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': 'https://ixuvo.com/#person',
+      name: 'Md Iqbal Hossain Shuvo',
+      alternateName: ['Shuvo', 'isuvo'],
+      url: 'https://ixuvo.com/',
+      jobTitle: 'Engineering Lead',
+      hasOccupation: [
+        'Engineering Lead',
+        'AI SaaS Architect',
+        'AI Systems Architect',
+        'Senior Systems Developer',
+        'Senior Software Developer',
+        'Software Developer',
+        'Full-Stack Engineer',
+        'Software Architect',
+        'Platform Engineer',
+        'AI Systems Engineer',
+      ].map((name) => ({ '@type': 'Occupation', name })),
+      knowsAbout: [
+        'AI SaaS Architecture',
+        'Agentic Systems',
+        'AI Workflow Automation',
+        'Business Process Automation',
+        'Software Architecture',
+        'Full-Stack Engineering',
+        'Distributed Systems',
+        'Cloud-Native Systems',
+        'Platform Engineering',
+        'DevSecOps',
+        'Software Security',
+        'Graph Neural Networks',
+        'Causal AI',
+        'Explainable AI',
+      ],
+      sameAs: [
+        'https://github.com/isuvo',
+        'https://www.linkedin.com/in/isuvo/',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://ixuvo.com/#website',
+      url: 'https://ixuvo.com/',
+      name: 'Shuvo',
+      alternateName: ['isuvo', 'ixuvo'],
+      publisher: { '@id': 'https://ixuvo.com/#person' },
+      inLanguage: 'en-CA',
+    },
+    {
+      '@type': 'ProfilePage',
+      '@id': 'https://ixuvo.com/#profilepage',
+      url: 'https://ixuvo.com/',
+      mainEntity: { '@id': 'https://ixuvo.com/#person' },
+      isPartOf: { '@id': 'https://ixuvo.com/#website' },
+    },
+  ],
 };
 
 try {
@@ -37,18 +86,22 @@ try {
 ---
 
 <BaseLayout
-  title="isuvo — Engineering Lead & AI/ML Researcher"
-  description={profile.summary}
+  title="Shuvo | Engineering Lead, AI Architect & Full-Stack Engineer"
+  description="Engineering Lead and AI architect Shuvo builds agentic systems, AI SaaS products, secure cloud-native platforms, and scalable business automation."
   canonical="/"
+  jsonLd={profileSchema}
 >
-  <script slot="head" type="application/ld+json" set:html={JSON.stringify(profileSchema)}></script>
   <section class="hero">
-    <h1>{profile.shortName}</h1>
-    <div class="identity-lines">
-      {profile.heroLines.map((line) => <div>{line}</div>)}
+    <h1 class="hero-statement">
+      <span class="hero-phrase hero-architecting">Architecting</span>
+      <span class="hero-phrase hero-agentic">Agentic Systems</span>
+    </h1>
+    <div class="identity-lines hero-support">
+      <div class="identity-primary"><span class="identity-name">Shuvo</span> — Engineering Lead &amp; AI/ML Researcher</div>
+      <div class="identity-focus">AI SaaS <span aria-hidden="true">·</span> Automation <span aria-hidden="true">·</span> Agentic Systems</div>
     </div>
-    <p class="lead-copy">{profile.summary}</p>
-    <div class="hero-actions">
+    <p class="lead-copy hero-lead">I turn complex ideas into scalable AI products, automated workflows, and measurable business outcomes.</p>
+    <div class="hero-actions hero-actions-intro">
       <a class="cta" href="/blog">
         <span>Read Blog</span><span class="cta-icon" aria-hidden="true">&#8594;</span>
       </a>
@@ -60,7 +113,6 @@ try {
 
   <section class="section" id="activity">
     <div class="section-head">
-      <div class="eyebrow">Activity</div>
       <h2 class="section-title">
         <span class="section-icon"></span>
         GitHub Contributions Across <a href={profile.links.github} target="_blank" rel="noreferrer">@Personal</a> and <a href="https://github.com/shuvo-kage" target="_blank" rel="noreferrer">@Professional</a> Profiles
@@ -87,7 +139,6 @@ try {
 
   <section class="section">
     <div class="section-head">
-      <div class="eyebrow">Profile</div>
       <h2 class="section-title"><span class="section-icon"></span>Profile</h2>
     </div>
     <div class="summary-strip">
@@ -103,7 +154,6 @@ try {
 
   <section class="section">
     <div class="section-head">
-      <div class="eyebrow">Career</div>
       <h2 class="section-title"><span class="section-icon"></span>Career Timeline</h2>
     </div>
     <div class="timeline-stack">
@@ -134,26 +184,13 @@ try {
 
   <section class="section">
     <div class="section-head">
-      <div class="eyebrow">Technology</div>
-      <h2 class="section-title"><span class="section-icon"></span>Technology Timeline</h2>
+      <h2 class="section-title"><span class="section-icon"></span>Technology Journey</h2>
     </div>
-    <div class="timeline-stack">
-      {profile.technologyTimeline.map((item) => (
-        <article class="timeline-card">
-          <div class="timeline-period">{item.period}</div>
-          <div class="entry-title">{item.label}</div>
-          <p class="timeline-detail">{item.detail}</p>
-          <ul class="timeline-points">
-            {item.highlights.map((point) => <li>{point}</li>)}
-          </ul>
-        </article>
-      ))}
-    </div>
+    <TechEvolution />
   </section>
 
   <section class="section">
     <div class="section-head">
-      <div class="eyebrow">Education</div>
       <h2 class="section-title"><span class="section-icon"></span>Education and Certifications</h2>
     </div>
     <div class="three-col-list">
@@ -176,12 +213,11 @@ try {
 
   <section class="section" id="projects">
     <div class="section-head">
-      <div class="eyebrow">Blog</div>
-      <h2 class="section-title"><span class="section-icon"></span>Recent Blog Posts</h2>
+      <h2 class="section-title"><span class="section-icon"></span>Recent Posts</h2>
     </div>
     <div class="grid three">
       {posts.length ? posts.map((post) => (
-        <article class="post-card">
+        <article class="post-card home-post-card">
           <div class="meta">{post.published_at ? new Date(post.published_at).toLocaleDateString('en-CA') : 'Draft'}</div>
           <h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3>
           <p>{post.summary || 'No summary yet.'}</p>
@@ -206,8 +242,7 @@ try {
 
   <section class="section">
     <div class="section-head">
-      <div class="eyebrow">Open Source</div>
-      <h2 class="section-title"><span class="section-icon"></span>Recent Repositories</h2>
+      <h2 class="section-title"><span class="section-icon"></span>Repositories</h2>
     </div>
     <div class="grid three">
       {repos.length ? repos.map((repo) => (
@@ -231,7 +266,6 @@ try {
 
   <section class="section">
     <div class="section-head">
-      <div class="eyebrow">Skills</div>
       <h2 class="section-title"><span class="section-icon"></span>Tools and Practice</h2>
     </div>
     <div class="three-col-list">
@@ -249,28 +283,135 @@ try {
     </div>
   </section>
 
-  <section class="section">
+  <section class="section" id="contact">
     <div class="section-head">
-      <div class="eyebrow">Contact</div>
-      <h2 class="section-title"><span class="section-icon"></span>Connect Me</h2>
+      <h2 class="section-title"><span class="section-icon"></span>Find Me</h2>
     </div>
-    <article class="panel contact-card">
-      <div class="contact-item">
-        <strong>Email</strong>
-        <p><a href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a></p>
+    <article class="panel find-me-card">
+      <div class="find-me-row">
+        <strong class="find-me-label">Email</strong>
+        <a class="find-me-link find-me-email" href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a>
       </div>
-      <div class="contact-item">
-        <strong>GitHub</strong>
-        <p><a href={profile.contact.github} target="_blank" rel="noreferrer">GitHub</a></p>
+      <div class="find-me-row">
+        <strong class="find-me-label">GitHub</strong>
+        <a class="find-me-link" href={profile.contact.github} target="_blank" rel="noopener noreferrer">
+          <span>View profile</span><span aria-hidden="true">&#8599;</span>
+        </a>
       </div>
-      <div class="contact-item">
-        <strong>LinkedIn</strong>
-        <p><a href={profile.contact.linkedin} target="_blank" rel="noreferrer">LinkedIn</a></p>
+      <div class="find-me-row">
+        <strong class="find-me-label">LinkedIn</strong>
+        <a class="find-me-link" href={profile.contact.linkedin} target="_blank" rel="noopener noreferrer">
+          <span>Follow me</span><span aria-hidden="true">&#8599;</span>
+        </a>
       </div>
-      <div class="contact-item">
-        <strong>X</strong>
-        <p><a href={profile.contact.x} target="_blank" rel="noreferrer">@suvobgd</a></p>
+      <div class="find-me-row">
+        <strong class="find-me-label">X</strong>
+        <div class="find-me-x-action">
+          <a
+            href="https://x.com/suvobgd?ref_src=twsrc%5Etfw"
+            class="twitter-follow-button"
+            data-show-count="false"
+          >Follow @suvobgd</a>
+        </div>
       </div>
     </article>
+    <script is:inline data-cfasync="false" async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
   </section>
+
+  <style>
+    .find-me-card {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: center;
+      gap: 1rem;
+      padding: 1.1rem;
+    }
+
+    .find-me-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      min-width: 0;
+      padding: 0.2rem;
+    }
+
+    .find-me-label {
+      color: var(--accent-soft);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .find-me-link {
+      width: fit-content;
+      max-width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--line-soft);
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.03);
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+
+    .find-me-link:hover,
+    .find-me-link:focus-visible {
+      color: var(--accent-soft);
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .find-me-email {
+      border-color: transparent;
+      background: transparent;
+      padding-inline: 0;
+    }
+
+    .find-me-x-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      min-height: 28px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    @media (max-width: 980px) {
+      .find-me-card {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .find-me-card {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+        padding-block: 0.35rem;
+      }
+
+      .find-me-row {
+        display: grid;
+        grid-template-columns: minmax(4.75rem, 0.3fr) minmax(0, 1fr);
+        justify-content: stretch;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+      }
+
+      .find-me-row + .find-me-row {
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .find-me-link,
+      .find-me-x-action {
+        justify-self: start;
+      }
+    }
+  </style>
 </BaseLayout>

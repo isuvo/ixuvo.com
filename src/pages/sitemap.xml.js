@@ -1,4 +1,5 @@
 import { getPublishedPostsForSitemap } from '../lib/pocketbase.js';
+import { blogPathForSlug } from '../lib/blogUrls.js';
 
 const PRODUCTION_ORIGIN = 'https://ixuvo.com';
 const PUBLIC_STATIC_ROUTES = ['/', '/blog'];
@@ -66,7 +67,7 @@ export async function GET() {
   }
 
   for (const post of posts) {
-    addUrl(`/blog/${post.slug}`, post.updated);
+    addUrl(blogPathForSlug(post.slug), post.updated);
   }
 
   const body = Array.from(urls.values())

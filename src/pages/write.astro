@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 const pocketbaseUrl = String(import.meta.env.PB_URL || '').trim().replace(/\/$/, '');
 const writerCookieName = 'ixuvo_writer_session';
-const adminUiUrl = String(import.meta.env.PUBLIC_PB_URL || '').trim().replace(/\/$/, '') + '/_/';
+const adminUiUrl = 'https://pb.ixuvo.com/_/#/';
 
 if (!pocketbaseUrl) {
   throw new Error('PB_URL environment variable is required.');
@@ -63,11 +63,9 @@ const writerAuthenticated = Boolean(writerRecord);
           </div>
         </form>
         <p class="helper" style="margin-top:0.8rem;">Public signup is disabled.</p>
-        {import.meta.env.PUBLIC_PB_URL ? (
-          <p class="helper" style="margin-top:0.4rem;">
-            PocketBase admin UI: <a href={adminUiUrl} target="_blank" rel="noreferrer">{adminUiUrl}</a>
-          </p>
-        ) : null}
+        <p class="helper" style="margin-top:0.4rem;">
+          PocketBase admin UI: <a href={adminUiUrl} target="_blank" rel="noreferrer">{adminUiUrl}</a>
+        </p>
         <p id="auth-status" class="status-line" style="margin-top:0.8rem;"></p>
       </article>
 
@@ -435,7 +433,7 @@ const writerAuthenticated = Boolean(writerRecord);
       const invalid = urls.filter((item) => {
         try {
           const parsed = new URL(item);
-          return !['http:', 'https:'].includes(parsed.protocol);
+          return parsed.protocol !== 'https:' || !parsed.hostname || Boolean(parsed.username || parsed.password);
         } catch {
           return true;
         }
@@ -494,7 +492,7 @@ const writerAuthenticated = Boolean(writerRecord);
       if (postForm.body_markdown.value.length > 20000) errors.push('Body Markdown must be 20,000 characters or fewer.');
       if (postForm.body_markdown.value.includes(imagePlacementMarker)) errors.push('Finish placing the body image or remove the image marker before saving.');
       if (!selectedTags().length) errors.push('Choose at least one tag.');
-      if (invalidUrls.length) errors.push(`Invalid source URL: ${invalidUrls[0]}`);
+      if (invalidUrls.length) errors.push(`Invalid source URL (public HTTPS required): ${invalidUrls[0]}`);
       if (coverError) errors.push(coverError);
 
       return errors;
@@ -765,6 +763,21 @@ const writerAuthenticated = Boolean(writerRecord);
       ].join(' ').toLowerCase().includes(query);
     }
 
+    function postTimestamp(post) {
+      return Date.parse(post.published_at || post.created || post.updated || '') || 0;
+    }
+
+    function formatPostDate(post) {
+      const value = post.published_at || post.created || post.updated;
+      if (!value) return 'Date unavailable';
+      const label = post.published_at ? 'Published' : 'Created';
+      return `${label} ${new Date(value).toLocaleDateString('en-CA', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })}`;
+    }
+
     function renderPosts(reset = false) {
       const auth = getAuth();
       if (!auth) {
@@ -791,6 +804,7 @@ const writerAuthenticated = Boolean(writerRecord);
           <p>
             <span class="status-badge status-${escapeHtml(post.status || 'draft')}">${escapeHtml(post.status || 'draft')}</span>
           </p>
+          <p class="helper">${escapeHtml(formatPostDate(post))}</p>
           <div class="pill-row" style="margin-top:0.75rem;">
             <button type="button" data-load-id="${escapeHtml(post.id)}">Load</button>
             <button type="button" class="danger-button" data-delete-id="${escapeHtml(post.id)}" data-delete-title="${escapeHtml(post.title || 'this post')}">Delete</button>
@@ -843,7 +857,7 @@ const writerAuthenticated = Boolean(writerRecord);
       }
 
       const url = new URL(pocketBaseEndpoint('/api/collections/posts/records'), window.location.origin);
-      url.searchParams.set('sort', '-updated');
+      url.searchParams.set('sort', '-published_at,-created');
       url.searchParams.set('perPage', '300');
 
       setBusy(true, 'Loading posts...', [loadMorePostsBtn]);
@@ -855,7 +869,7 @@ const writerAuthenticated = Boolean(writerRecord);
           throw new Error(formatPocketBaseError(data, 'Failed to load posts.'));
         }
 
-        const items = data.items || [];
+        const items = (data.items || []).sort((a, b) => postTimestamp(b) - postTimestamp(a));
         allPosts = items;
 
         if (!items.length) {

@@ -1,0 +1,61 @@
+# Shuvo
+
+> Md Iqbal Hossain Shuvo, known professionally as Shuvo and online as isuvo, is an Engineering Lead, AI SaaS Architect, software architect, and full-stack engineer based in Sherbrooke, Quebec, Canada. He builds agentic systems, business workflow automation platforms, secure cloud-native software, and AI-enabled products.
+
+## Professional Roles
+
+- Engineering Lead
+- AI SaaS Architect
+- AI Systems Architect
+- Senior Systems Developer
+- Senior Software Developer
+- Software Developer
+- Full-Stack Engineer
+- Software Architect
+- Platform Engineer
+- AI Systems Engineer
+- Cloud-Native Engineer
+- DevSecOps Engineer
+- Technical Lead
+- Software Engineering Lead
+
+## Core Expertise
+
+- Agentic AI systems and workflow orchestration
+- AI SaaS architecture and product engineering
+- Business process and operational automation
+- Full-stack software engineering
+- Software and platform architecture
+- Distributed systems and microservices
+- Cloud-native architecture and delivery
+- Platform engineering
+- DevSecOps and secure software delivery
+- Software security and vulnerability analysis
+- Graph neural networks for program analysis
+- Causal and explainable AI
+- Engineering leadership
+- Product-to-platform execution
+
+## Profile
+
+- [Homepage](https://ixuvo.com/): Professional profile, experience, expertise, research, and selected work.
+- [Blog](https://ixuvo.com/blog): Technical writing on AI systems, software architecture, security, automation, cloud-native platforms, and engineering.
+- [Resume](https://ixuvo.com/isuvo-resume.pdf): Professional experience, technical skills, education, and engineering background.
+
+## Selected Technical Writing
+
+- [Analyzing Bun's Rapid AI-Driven Rewrite from Zig to Rust and the Fallout of the '11-Day Migration'](https://ixuvo.com/blog/bun-zig-rust-ai-migration-analysis)
+- [Securing the Boundary: Mitigating Zero-Day Vulnerabilities in Modern API Gateways](https://ixuvo.com/blog/securing-boundary-zero-day-api-gateways)
+- [Architecting Secure etcd Encryption: Analyzing the Vault Kubernetes KMS v2 Beta](https://ixuvo.com/blog/vault-kubernetes-kms-v2-beta-analysis)
+- [Securing AI Orchestrators: Mitigating the Langflow IDOR Vulnerability (CVE-2026-55255)](https://ixuvo.com/blog/securing-ai-orchestrators-langflow-idor-cve-2026-55255)
+- [Mesh LLM Launches P2P Distributed Inference Over the iroh Networking Layer](https://ixuvo.com/blog/mesh-llm-p2p-distributed-inference-iroh)
+
+## Research
+
+- Research in software security, graph-based program analysis, causal reasoning, and explainable vulnerability detection.
+- [CausalChain thesis implementation](https://github.com/isuvo/Thesis_Causalchain): Public repository for causal and explainable vulnerability-analysis research.
+
+## Verified Profiles
+
+- [GitHub](https://github.com/isuvo)
+- [LinkedIn](https://www.linkedin.com/in/isuvo/)

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { Buffer } from 'node:buffer';
+import { resolveSourceUrls } from '../../../lib/sourceUrls.js';
 
 const pbUrl = String(import.meta.env.PB_URL || '').trim().replace(/\/$/, '');
 
@@ -19,6 +20,20 @@ function isAllowedPath(path: string) {
 function writerTokenFromCookie(cookieHeader: string | null) {
   const match = cookieHeader?.match(/(?:^|;\s*)ixuvo_writer_session=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : '';
+}
+
+function sourceUrlArray(value: unknown) {
+  if (Array.isArray(value)) return value.map(String).map((item) => item.trim()).filter(Boolean);
+  if (typeof value !== 'string' || !value.trim()) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.map(String).map((item) => item.trim()).filter(Boolean);
+  } catch {
+    // Fall through to newline/comma parsing for the writer payload.
+  }
+
+  return value.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
 }
 
 async function isAuthorizedWriter(authorization: string) {
@@ -88,6 +103,31 @@ export const ALL: APIRoute = async ({ params, request, url }) => {
     /^api\/collections\/posts\/records(?:\/[a-zA-Z0-9_-]+)?$/.test(path)
   ) {
     const payload = await request.json();
+    if (payload.status === 'published' && Object.hasOwn(payload, 'source_urls')) {
+      const sourceResolution = await resolveSourceUrls(sourceUrlArray(payload.source_urls), { timeoutMs: 5000 });
+      const invalidSources = sourceResolution.results.filter((result) => result.status === 'invalid');
+
+      if (invalidSources.length) {
+        return new Response(JSON.stringify({
+          message: 'Published sources must use valid public HTTPS URLs.',
+          data: { source_urls: invalidSources },
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      payload.source_urls = sourceResolution.urls;
+      for (const result of sourceResolution.unresolved) {
+        console.warn('[source-url-review]', JSON.stringify({
+          path,
+          original: result.original,
+          reason: result.reason,
+          omitted: !sourceResolution.urls.includes(result.original),
+        }));
+      }
+    }
+
     const coverImage = payload._cover_image;
     const embeddedImages = Array.isArray(payload._embedded_images) ? payload._embedded_images : [];
     const hasCoverImage = Boolean(coverImage?.data && coverImage?.name && coverImage?.type);
